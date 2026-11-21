@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}School applications - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>School applications</h1>
+
+    <div class="eh-tabs">
+        {% for s in ["pending", "approved", "rejected"] %}
+        <a href="{{ url_for('admin.schools', status=s) }}" class="{{ 'active' if current == s }}">{{ s|capitalize }} ({{ counts[s] }})</a>
+        {% endfor %}
+        <a href="{{ url_for('admin.schools', status='all') }}" class="{{ 'active' if current == 'all' }}">All</a>
+    </div>
+
+    {% if schools %}
+    <div class="table-responsive">
+        <table class="table align-middle eh-table">
+            <thead>
+                <tr><th>School</th><th>UDISE+</th><th>City</th><th>Submitted</th><th>Status</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for s in schools %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.udise_code }}</td>
+                    <td>{{ s.city }}</td>
+                    <td>{{ s.submitted_at.strftime('%d %b %Y') if s.submitted_at }}</td>
+                    <td><span class="eh-status eh-status-{{ s.status }}">{{ s.status|capitalize }}</span></td>
+                    <td class="text-end"><a class="btn btn-eh-dark btn-sm" href="{{ url_for('admin.detail', school_id=s.id) }}">Review</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted mt-4">No applications here.</p>
+    {% endif %}
+</div>
+{% endblock %}

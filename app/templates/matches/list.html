@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My matches - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1>Your matches</h1>
+    <a href="{{ url_for('matches.priorities') }}">Change my priorities</a>
+
+    {% if not has_criteria %}
+    <p class="text-muted mt-4">You have not filled any priority yet. Add at least a budget, board, city or facility.</p>
+    {% elif results %}
+    <div class="eh-school-grid">
+        {% for r in results %}
+        <a class="eh-school-card" href="{{ url_for('schools.public', school_id=r.school.id) }}">
+            <div class="d-flex justify-content-between align-items-start">
+                <h3>{{ r.school.name }}</h3>
+                <span class="eh-score">{{ r.score }}%</span>
+            </div>
+            <p class="text-muted mb-2">{{ r.school.city }}, {{ r.school.state }} · {{ r.school.board }}</p>
+            <ul class="eh-reasons">
+                {% for text, ok in r.reasons %}
+                <li class="{{ 'ok' if ok else 'miss' }}">{{ "✓" if ok else "✗" }} {{ text }}</li>
+                {% endfor %}
+            </ul>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted mt-4">No schools match yet. Schools appear here after they are approved and fill their profile.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{# Legacy template commented out
+{% extends "base.html" %}
+
+{% block title %}{{ school.name }} - EduHive{% endblock %}
+
+{% block content %}
+{% if is_preview %}
+<div class="container pt-3">
+    <div class="alert alert-warning mb-0">Preview only. This page is not public because the school is <strong>{{ school.status }}</strong>.</div>
+</div>
+{% endif %}
+
+<section class="eh-school-hero">
+    <div class="container">
+        <div class="eh-school-head">
+            {% if school.logo %}
+            <img class="eh-school-logo" src="{{ url_for('profiles.photo', photo_id=school.logo.id) }}" alt="{{ school.name }} logo">
+            {% else %}
+            <div class="eh-school-logo eh-school-logo-empty" aria-hidden="true">{{ school.name[:1] }}</div>
+            {% endif %}
+            <div>
+                <h1>{{ school.name }}</h1>
+                {% if profile and profile.tagline %}<p class="eh-tagline">{{ profile.tagline }}</p>{% endif %}
+                <p class="eh-meta">
+                    <span class="eh-status eh-status-{{ school.status }}">{{ "Verified" if school.status == "approved" else school.status|capitalize }}</span>
+                    <span>{{ school.board }}</span>
+                    <span>{{ school.city }}, {{ school.state }}</span>
+                    <span>Since {{ school.established_year }}</span>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container py-5">
+    <div class="eh-form-wide">
+
+        {% if not profile %}
+        <p class="text-muted">This school has not added more details yet.</p>
+        {% else %}
+
+        <dl class="eh-facts">
+            {% if profile.classes_from %}<div><dt>Classes</dt><dd>{{ profile.classes_from }} to {{ profile.classes_to }}</dd></div>{% endif %}
+            {% if profile.medium %}<div><dt>Medium</dt><dd>{{ profile.medium }}</dd></div>{% endif %}
+            {% if profile.total_students %}<div><dt>Students</dt><dd>{{ profile.total_students|inr }}</dd></div>{% endif %}
+            {% if profile.fee_min is not none or profile.fee_max is not none %}
+            <div><dt>Yearly fees</dt>
+                <dd>
+                    {% if profile.fee_min is not none and profile.fee_max is not none and profile.fee_min != profile.fee_max %}
+                        Rs. {{ profile.fee_min|inr }} to Rs. {{ profile.fee_max|inr }}
+                    {% else %}
+                        Rs. {{ (profile.fee_min if profile.fee_min is not none else profile.fee_max)|inr }}
+                    {% endif %}
+                </dd>
+            </div>
+            {% endif %}
+            <div><dt>Admissions</dt>
+                <dd>
+                    {% if profile.admission_open %}Open{% if profile.admission_deadline %} until {{ profile.admission_deadline.strftime('%d %b %Y') }}{% endif %}
+                    {% else %}Closed{% endif %}
+                </dd>
+            </div>
+        </dl>
+
+        {% if profile.admission_open and profile.admission_url %}
+        <p><a class="btn btn-eh" href="{{ profile.admission_url }}" target="_blank" rel="noopener nofollow">Open admission form</a></p>
+        {% endif %}
+
+        {% if profile.about %}
+        <h2 class="eh-form-h">About</h2>
+        <p class="eh-about">{{ profile.about }}</p>
+        {% endif %}
+        {% endif %}
+
+        {% if school.facilities %}
+        <h2 class="eh-form-h">Facilities</h2>
+        <ul class="eh-chips">
+            {% for value in school.facilities %}<li>{{ facility_labels.get(value, value) }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if school.specialities %}
+        <h2 class="eh-form-h">Specialities</h2>
+        <ul class="eh-chips eh-chips-accent">
+            {% for value in school.specialities %}<li>{{ speciality_labels.get(value, value) }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if results %}
+        <h2 class="eh-form-h">Board exam results</h2>
+        <div class="table-responsive">
+            <table class="table eh-table">
+                <thead><tr><th>Year</th><th>Class 10 pass</th><th>Class 12 pass</th></tr></thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.year }}</td>
+                        <td>{% if r.class10_pass is not none %}{{ '%.1f'|format(r.class10_pass|float) }}%{% else %}-{% endif %}</td>
+                        <td>{% if r.class12_pass is not none %}{{ '%.1f'|format(r.class12_pass|float) }}%{% else %}-{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted small">Reported by the school. EduHive has not verified these numbers.</p>
+        {% endif %}
+
+        {% if school.gallery %}
+        <h2 class="eh-form-h">Photos</h2>
+        <div class="eh-gallery">
+            {% for p in school.gallery %}
+            <img src="{{ url_for('profiles.photo', photo_id=p.id) }}" alt="Photo of {{ school.name }}" loading="lazy">
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <h2 class="eh-form-h">Location</h2>
+        <p>{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</p>
+        {% if profile and profile.latitude is not none %}
+        <div id="map" class="eh-map" data-lat="{{ profile.latitude }}" data-lng="{{ profile.longitude }}"></div>
+        {% if profile.location_source == "pincode" %}
+        <p class="text-muted small mt-2">Approximate location, based on the pincode.</p>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if profile and profile.latitude is not none %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var el = document.getElementById("map");
+    if (!el || typeof L === "undefined") { return; }
+    var point = [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)];
+    var map = L.map(el).setView(point, 15);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+    L.marker(point).addTo(map);
+})();
+</script>
+{% endif %}
+{% endblock %}
+#}

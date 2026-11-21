@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ event.title }} - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <a href="{{ url_for('content.events') }}">&larr; All events</a>
+        <h1 class="mt-2">{{ event.title }}</h1>
+        <p class="text-muted">by <a href="{{ url_for('schools.public', school_id=event.school_id) }}">{{ event.school.name }}</a></p>
+
+        <dl class="eh-dl">
+            <dt>When</dt><dd>{{ event.starts_at.strftime('%d %b %Y, %I:%M %p') }}</dd>
+            <dt>Where</dt><dd>{{ event.venue }}</dd>
+            <dt>Joined</dt><dd>{{ event.registrations|length }}{% if event.capacity %} of {{ event.capacity }} seats{% endif %}</dd>
+        </dl>
+        <p class="eh-pre mt-3">{{ event.description }}</p>
+
+        {% if event.is_past %}
+        <div class="alert alert-secondary">This event has already happened.</div>
+        {% elif not current_user.is_authenticated %}
+        <a class="btn btn-event" href="{{ url_for('auth.login', next=request.path) }}">Log in to join</a>
+        {% elif current_user.role == "user" %}
+            {% if joined %}
+            <form method="post" action="{{ url_for('content.leave', event_id=event.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-event-outline" type="submit">Leave event</button>
+            </form>
+            {% elif event.spots_left == 0 %}
+            <div class="alert alert-warning">This event is full.</div>
+            {% else %}
+            <form method="post" action="{{ url_for('content.join', event_id=event.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-event" type="submit">Join this event</button>
+            </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

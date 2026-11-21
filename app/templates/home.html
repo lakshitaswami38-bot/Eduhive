@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}EduHive: find a school that fits your family{% endblock %}
+
+{% block content %}
+
+<section class="eh-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1>Find a school that fits your family.</h1>
+                <p class="lead">
+                    EduHive connects verified schools with parents, students and teachers.
+                    Share your budget, marks and location, and see which schools match and why.
+                </p>
+                <div class="actions">
+                    <a class="btn btn-eh" href="#">Find schools near me</a>
+                    <a class="btn btn-eh-outline" href="#">Register your school</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="eh-honey" aria-hidden="true">
+                    <div class="row-h">
+                        <div class="eh-hex dark">Verified</div>
+                        <div class="eh-hex soft">Events</div>
+                    </div>
+                    <div class="row-h">
+                        <div class="eh-hex soft">Nearby</div>
+                        <div class="eh-hex amber">92% match</div>
+                        <div class="eh-hex dark">Fees</div>
+                    </div>
+                    <div class="row-h">
+                        <div class="eh-hex dark">Follow</div>
+                        <div class="eh-hex soft">Compare</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="eh-section">
+    <div class="container">
+        <h2>How EduHive works</h2>
+        <p class="intro">From a new school profile to a parent's shortlist, in four steps.</p>
+        <ol class="eh-steps">
+            <li>
+                <div class="eh-step-no">1</div>
+                <h3>Verify</h3>
+                <p>An admin checks every school before it appears on EduHive.</p>
+            </li>
+            <li>
+                <div class="eh-step-no">2</div>
+                <h3>Connect</h3>
+                <p>Schools post events and achievements, and link up with each other.</p>
+            </li>
+            <li>
+                <div class="eh-step-no">3</div>
+                <h3>Discover</h3>
+                <p>Families search by area and radius, follow schools and join events.</p>
+            </li>
+            <li>
+                <div class="eh-step-no">4</div>
+                <h3>Match</h3>
+                <p>Set what matters most and get a ranked list, with the reason for each pick.</p>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="eh-section eh-who">
+    <div class="container">
+        <h2>Made for everyone around a school</h2>
+        <div class="eh-who-grid">
+            <div class="eh-who-col">
+                <h3>Parents and students</h3>
+                <p>Search by area, set your budget and priorities, and see why each school was suggested.</p>
+            </div>
+            <div class="eh-who-col">
+                <h3>Schools</h3>
+                <p>Get verified, share events and results, and connect with other schools nearby.</p>
+            </div>
+            <div class="eh-who-col">
+                <h3>Teachers</h3>
+                <p>Follow schools, join inter-school events and see what is happening around you.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="eh-cta">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <h2>Run a school?</h2>
+            <p>Register, get verified and start posting to families in your area.</p>
+        </div>
+        <a class="btn btn-eh-dark" href="#">Register your school</a>
+    </div>
+</section>
+
+{% endblock %}

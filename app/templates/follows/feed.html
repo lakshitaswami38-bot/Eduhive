@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}My feed - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <h1>My feed</h1>
+
+        {% if schools %}
+        <p class="text-muted">
+            Following:
+            {% for s in schools %}<a href="{{ url_for('schools.public', school_id=s.id) }}">{{ s.name }}</a>{{ ", " if not loop.last }}{% endfor %}
+        </p>
+        {% else %}
+        <p class="text-muted">You do not follow any school yet. <a href="{{ url_for('schools.listing') }}">Find schools</a> and press Follow.</p>
+        {% endif %}
+
+        {% for i in items %}
+        <div class="eh-item">
+            {% if i.kind == "post" %}
+            <span class="eh-status eh-status-approved">Post</span>
+            <strong>{{ i.obj.title }}</strong>
+            <div class="text-muted small">{{ i.obj.school.name }} · {{ i.obj.created_at.strftime('%d %b %Y') }}</div>
+            <p class="eh-pre mb-0">{{ i.obj.body }}</p>
+            {% else %}
+            <span class="eh-status eh-status-pending">Event</span>
+            <a href="{{ url_for('content.event_detail', event_id=i.obj.id) }}"><strong>{{ i.obj.title }}</strong></a>
+            <div class="text-muted small">{{ i.obj.school.name }} · {{ i.obj.starts_at.strftime('%d %b %Y, %I:%M %p') }} · {{ i.obj.venue }}</div>
+            {% endif %}
+        </div>
+        {% else %}
+        {% if schools %}<p class="text-muted">Nothing new yet from the schools you follow.</p>{% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

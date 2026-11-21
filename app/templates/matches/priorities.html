@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import field %}
+{% block title %}My priorities - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <h1>What matters to you?</h1>
+        <p class="text-muted">Fill only what you care about. Empty fields are ignored. Then say how important each one is.</p>
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="row">
+                <div class="col-md-8">{{ field(form.max_fee, inputmode="numeric") }}</div>
+                <div class="col-md-4">{{ field(form.w_fee) }}</div>
+                <div class="col-md-8">{{ field(form.board) }}</div>
+                <div class="col-md-4">{{ field(form.w_board) }}</div>
+                <div class="col-md-8">{{ field(form.city) }}</div>
+                <div class="col-md-4">{{ field(form.w_city) }}</div>
+                <div class="col-md-8">{{ field(form.class_needed, inputmode="numeric", hint="Schools that do not teach this class are hidden") }}</div>
+            </div>
+
+            <h2 class="eh-form-h">Facilities</h2>
+            <div class="row mb-3">
+                {% for value, label in form.facilities.choices %}
+                <div class="col-sm-6 col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="facilities" value="{{ value }}"
+                            id="fac_{{ value }}" {{ "checked" if value in (form.facilities.data or []) }}>
+                        <label class="form-check-label" for="fac_{{ value }}">{{ label }}</label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row"><div class="col-md-4">{{ field(form.w_facilities) }}</div></div>
+
+            {{ form.submit(class="btn btn-eh mt-2") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

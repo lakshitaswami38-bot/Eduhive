@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Application status - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <h1>{{ school.name }}</h1>
+        <p><span class="eh-status eh-status-{{ school.status }}">{{ school.status|capitalize }}</span></p>
+
+        {% if school.status == "pending" %}
+        <div class="alert alert-info">Your application is waiting for an admin to review it. You will see the result here.</div>
+        {% elif school.status == "rejected" %}
+        <div class="alert alert-warning">
+            <strong>Your application was rejected.</strong><br>
+            {{ school.rejection_reason }}
+        </div>
+        <a class="btn btn-eh mb-4" href="{{ url_for('schools.edit') }}">Edit and resubmit</a>
+        {% else %}
+        <div class="alert alert-success">Your school is verified. Profile and posts are the next step.</div>
+        {% endif %}
+
+        <h2 class="eh-form-h">Details</h2>
+        <dl class="eh-dl">
+            <dt>UDISE+ code</dt><dd>{{ school.udise_code }}</dd>
+            <dt>Board</dt><dd>{{ school.board }}</dd>
+            <dt>Established</dt><dd>{{ school.established_year }} ({{ school.years_running }} years)</dd>
+            <dt>Address</dt><dd>{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</dd>
+            <dt>Principal's phone</dt><dd>{{ school.principal_phone }}</dd>
+            <dt>Official email</dt><dd>{{ school.official_email }}</dd>
+            <dt>Submitted</dt><dd>{{ school.submitted_at.strftime('%d %b %Y') if school.submitted_at }}</dd>
+        </dl>
+
+        <h2 class="eh-form-h">Documents</h2>
+        <ul class="eh-doclist">
+            {% for key, label, required in doc_types %}
+            {% set d = school.document(key) %}
+            <li>
+                <span>{{ label }}</span>
+                {% if d %}<a href="{{ url_for('schools.document', doc_id=d.id) }}" target="_blank" rel="noopener">{{ d.original_name }}</a>
+                {% else %}<span class="text-muted">Not uploaded</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

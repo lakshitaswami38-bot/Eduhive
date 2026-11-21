@@ -1,0 +1,317 @@
+/* EduHive theme: charcoal + amber (same palette as the project presentation) */
+:root {
+    --ink: #1F2430;
+    --ink-2: #2E3446;
+    --amber: #F5A623;
+    --amber-soft: #FFE3A3;
+    --event: #0F766E;
+    --event-hover: #115E59;
+    --paper: #FFFFFF;
+    --mist: #F4F5F8;
+    --muted: #5B6470;
+    --on-ink-muted: #C4C9D6;
+    --font-head: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+}
+
+h1, h2, h3 { font-family: var(--font-head); font-weight: 700; letter-spacing: -0.01em; }
+
+a:focus-visible, .btn:focus-visible {
+    outline: 3px solid var(--amber);
+    outline-offset: 2px;
+}
+
+/* ---------- Navbar ---------- */
+.eh-nav { background: var(--ink); padding: 0.9rem 0; }
+.eh-brand {
+    display: flex; align-items: center; gap: 0.6rem;
+    color: #fff; font-family: var(--font-head); font-size: 1.5rem; font-weight: 700;
+    text-decoration: none;
+}
+.eh-brand:hover { color: #fff; }
+.eh-logo {
+    width: 34px; height: 39px; background: var(--amber); color: var(--ink);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-body); font-size: 0.8rem; font-weight: 700;
+}
+.eh-nav .nav-link { color: var(--on-ink-muted); font-weight: 500; }
+.eh-nav .nav-link:hover { color: #fff; }
+.eh-nav .navbar-toggler { border-color: var(--ink-2); }
+.eh-nav .navbar-toggler-icon { filter: invert(1); }
+
+/* ---------- Buttons ---------- */
+.btn-eh {
+    background: var(--amber); color: var(--ink); font-weight: 700;
+    border: 2px solid var(--amber); border-radius: 999px; padding: 0.7rem 1.6rem;
+}
+.btn-eh:hover { background: var(--amber-soft); border-color: var(--amber-soft); color: var(--ink); }
+.btn-eh-outline {
+    background: transparent; color: #fff; font-weight: 700;
+    border: 2px solid var(--on-ink-muted); border-radius: 999px; padding: 0.7rem 1.6rem;
+}
+.btn-eh-outline:hover { border-color: #fff; color: #fff; }
+.btn-eh-dark {
+    background: var(--ink); color: #fff; font-weight: 700;
+    border: 2px solid var(--ink); border-radius: 999px; padding: 0.7rem 1.6rem;
+}
+.btn-eh-dark:hover { background: var(--ink-2); border-color: var(--ink-2); color: #fff; }
+
+/* ---------- Event Buttons (--event token: deep teal #0F766E) ---------- */
+.btn-event {
+    background: var(--event); color: #fff; font-weight: 700;
+    border: 2px solid var(--event); border-radius: 999px; padding: 0.7rem 1.6rem;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-event:hover { background: var(--event-hover); border-color: var(--event-hover); color: #fff; }
+.btn-event-outline {
+    background: transparent; color: var(--event); font-weight: 700;
+    border: 2px solid var(--event); border-radius: 999px; padding: 0.7rem 1.6rem;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-event-outline:hover { background: var(--event); border-color: var(--event); color: #fff; }
+.btn-event.btn-sm, .btn-event-outline.btn-sm { padding: 0.35rem 1rem; font-size: 0.9rem; }
+.btn-event.disabled, .btn-event:disabled {
+    background: var(--muted); border-color: var(--muted); color: #fff; opacity: 0.7; pointer-events: none;
+}
+
+/* ---------- Hero ---------- */
+.eh-hero { background: var(--ink); color: #fff; padding: 4rem 0 5rem; overflow: hidden; }
+.eh-hero h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.1; margin-bottom: 1.2rem; }
+.eh-hero p.lead { color: var(--on-ink-muted); max-width: 34rem; font-size: 1.15rem; }
+.eh-hero .actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 2rem; }
+
+/* Honeycomb: the one memorable element on the page */
+.eh-honey { --w: 112px; --h: calc(var(--w) * 1.1547); display: flex; flex-direction: column; align-items: center; }
+.eh-honey .row-h { display: flex; gap: 6px; margin-top: calc(var(--h) * -0.25 + 6px); }
+.eh-honey .row-h:first-child { margin-top: 0; }
+.eh-hex {
+    width: var(--w); height: var(--h);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    font-size: 0.85rem; font-weight: 700; line-height: 1.2; padding: 0 0.6rem;
+}
+.eh-hex.amber { background: var(--amber); color: var(--ink); }
+.eh-hex.soft  { background: var(--amber-soft); color: var(--ink); }
+.eh-hex.dark  { background: var(--ink-2); color: #fff; }
+
+/* ---------- Sections ---------- */
+.eh-section { padding: 4.5rem 0; }
+.eh-section h2 { font-size: clamp(1.7rem, 3vw, 2.2rem); margin-bottom: 0.6rem; }
+.eh-section .intro { color: var(--muted); max-width: 36rem; }
+
+/* How it works: a real sequence, so numbered and joined by a line */
+.eh-steps { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; gap: 2rem; grid-template-columns: repeat(4, 1fr); position: relative; }
+.eh-steps::before { content: ""; position: absolute; top: 22px; left: 22px; right: 22px; height: 2px; background: var(--amber-soft); }
+.eh-steps li { position: relative; }
+.eh-step-no {
+    width: 44px; height: 51px; background: var(--amber); color: var(--ink);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: 1rem;
+}
+.eh-steps h3 { font-size: 1.2rem; }
+.eh-steps p { color: var(--muted); margin: 0; }
+
+/* Audiences: plain columns divided by rules, not cards */
+.eh-who { background: var(--mist); }
+.eh-who-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 2rem; }
+.eh-who-col { padding: 0 2rem; border-left: 3px solid var(--amber); }
+.eh-who-col h3 { font-size: 1.25rem; }
+.eh-who-col p { color: var(--muted); margin: 0; }
+
+/* Call to action band */
+.eh-cta { background: var(--amber); padding: 3.5rem 0; }
+.eh-cta h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); margin-bottom: 0.4rem; }
+.eh-cta p { margin: 0; max-width: 32rem; }
+
+/* ---------- Footer ---------- */
+.eh-footer { background: var(--ink); color: var(--on-ink-muted); padding: 2rem 0; font-size: 0.95rem; }
+.eh-footer a { color: var(--on-ink-muted); text-decoration: none; margin-left: 1.2rem; }
+.eh-footer a:hover { color: #fff; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 991.98px) {
+    .eh-steps { grid-template-columns: repeat(2, 1fr); }
+    .eh-steps::before { display: none; }
+    .eh-who-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .eh-who-col { padding: 0 0 0 1.2rem; }
+    .eh-honey { margin-top: 3rem; }
+}
+@media (max-width: 575.98px) {
+    .eh-honey { --w: 92px; }
+    .eh-hex { font-size: 0.75rem; }
+    .eh-steps { grid-template-columns: 1fr; }
+}
+/* ---------- Auth and choice pages ---------- */
+.eh-auth { max-width: 460px; margin: 3rem auto; }
+.eh-auth h1 { font-size: 2rem; }
+.eh-auth .form-control { padding: 0.7rem 0.9rem; }
+
+.eh-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; margin-top: 2rem; }
+.eh-choice-grid .eh-who-col p { margin-bottom: 1.2rem; }
+@media (max-width: 767.98px) {
+    .eh-choice-grid { grid-template-columns: 1fr; }
+}
+/* ---------- Larger, website-standard text sizes ---------- */
+html { font-size: 18px; }
+body { font-size: 1rem; line-height: 1.65; }
+
+.eh-nav .nav-link { font-size: 1.05rem; padding-left: 0.9rem; padding-right: 0.9rem; }
+.eh-nav .btn { font-size: 1rem; padding: 0.55rem 1.3rem; }
+.eh-brand { font-size: 1.7rem; }
+
+.eh-hero h1 { font-size: clamp(2.4rem, 5vw, 3.8rem); }
+.eh-hero p.lead { font-size: 1.25rem; max-width: 36rem; }
+.eh-honey { --w: 124px; }
+.eh-hex { font-size: 0.95rem; }
+
+.eh-section .intro { font-size: 1.1rem; }
+.eh-steps h3 { font-size: 1.3rem; }
+.eh-steps p, .eh-who-col p, .eh-cta p { font-size: 1.05rem; }
+.eh-who-col h3 { font-size: 1.4rem; }
+.eh-footer { font-size: 1rem; }
+
+.form-label { font-size: 1rem; font-weight: 500; }
+.eh-auth .form-control { font-size: 1.05rem; }
+
+@media (max-width: 575.98px) {
+    html { font-size: 17px; }
+    .eh-honey { --w: 96px; }
+    .eh-hex { font-size: 0.8rem; }
+}
+
+/* ---------- School registration and admin review ---------- */
+.eh-form-wide { max-width: 860px; margin: 0 auto; }
+.eh-form-h { font-size: 1.4rem; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--amber-soft); }
+
+.eh-status { display: inline-block; padding: 0.2rem 0.8rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; }
+.eh-status-pending  { background: var(--amber-soft); color: var(--ink); }
+.eh-status-approved { background: #D7F2E3; color: #14532D; }
+.eh-status-rejected { background: #FDE2E1; color: #7F1D1D; }
+
+.eh-dl { display: grid; grid-template-columns: 11rem 1fr; gap: 0.5rem 1.5rem; margin: 0; }
+.eh-dl dt { color: var(--muted); font-weight: 500; }
+.eh-dl dd { margin: 0; }
+
+.eh-doclist { list-style: none; padding: 0; margin: 0; }
+.eh-doclist li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--mist); }
+
+.eh-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+.eh-tabs a { padding: 0.4rem 1rem; border-radius: 999px; text-decoration: none; color: var(--ink); background: var(--mist); font-weight: 500; }
+.eh-tabs a.active { background: var(--ink); color: #fff; }
+
+.eh-table th { color: var(--muted); font-weight: 500; }
+
+@media (max-width: 575.98px) {
+    .eh-dl { grid-template-columns: 1fr; gap: 0.1rem; }
+    .eh-dl dd { margin-bottom: 0.8rem; }
+}
+
+/* ---------- School profile (public page and editor) ---------- */
+.btn-eh-outline-dark {
+    background: transparent; color: var(--ink); font-weight: 700;
+    border: 2px solid var(--ink); border-radius: 999px; padding: 0.7rem 1.6rem;
+}
+.btn-eh-outline-dark:hover { background: var(--ink); color: #fff; }
+.btn-eh-outline-dark.btn-sm { padding: 0.3rem 0.9rem; font-size: 0.85rem; }
+
+.eh-school-hero { background: var(--ink); color: #fff; padding: 3rem 0; }
+.eh-school-head { display: flex; align-items: center; gap: 1.8rem; flex-wrap: wrap; }
+.eh-school-head h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); margin: 0 0 0.3rem; }
+.eh-school-logo {
+    width: 110px; height: 110px; border-radius: 18px; background: #fff; object-fit: contain;
+    padding: 6px; flex-shrink: 0;
+}
+.eh-school-logo-empty {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--amber); color: var(--ink); font-family: var(--font-head); font-size: 3rem; font-weight: 700;
+}
+.eh-tagline { color: var(--on-ink-muted); font-size: 1.2rem; margin: 0 0 0.6rem; }
+.eh-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.2rem; margin: 0; color: var(--on-ink-muted); }
+
+.eh-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1.2rem 2rem; margin: 0 0 1.5rem; }
+.eh-facts dt { color: var(--muted); font-weight: 500; font-size: 0.9rem; }
+.eh-facts dd { margin: 0; font-weight: 700; font-size: 1.1rem; }
+.eh-about { white-space: pre-line; }
+
+.eh-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.eh-chips li { background: var(--mist); padding: 0.3rem 1rem; border-radius: 999px; font-weight: 500; }
+.eh-chips-accent li { background: var(--amber-soft); }
+
+.eh-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.8rem; }
+.eh-gallery img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: var(--mist); }
+.eh-gallery-manage figure { margin: 0; }
+.eh-gallery-manage figure img { margin-bottom: 0.4rem; }
+
+.eh-logo-preview { display: block; width: 90px; height: 90px; object-fit: contain; border: 1px solid var(--mist); border-radius: 12px; padding: 4px; margin-bottom: 0.6rem; }
+.eh-checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.4rem 1.5rem; }
+.eh-map { height: 340px; border-radius: 14px; background: var(--mist); }
+
+@media (max-width: 575.98px) {
+    .eh-school-logo { width: 84px; height: 84px; }
+}
+/* ---------- School list and profile ---------- */
+.eh-filter { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.75rem; margin: 1.5rem 0; }
+.eh-school-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
+.eh-school-card { display: block; padding: 1.25rem; border: 1px solid var(--mist); border-radius: 12px; text-decoration: none; color: var(--ink); background: #fff; }
+.eh-school-card:hover { border-color: var(--amber-soft); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08); }
+.eh-school-card h3 { font-size: 1.2rem; }
+@media (max-width: 767.98px) { .eh-filter { grid-template-columns: 1fr; } }
+/* ---------- Matches ---------- */
+.eh-score { background: var(--ink); color: #fff; border-radius: 999px; padding: 0.15rem 0.7rem; font-weight: 700; white-space: nowrap; }
+.eh-reasons { list-style: none; padding: 0; margin: 0; font-size: 0.92rem; }
+.eh-reasons li.ok { color: #14532D; }
+.eh-reasons li.miss { color: #7F1D1D; }
+
+/* =====================================================================
+Full-width layout and larger text (keep this block at the END of file)
+   ===================================================================== */
+
+/* Text grows with the screen */
+html { font-size: 18px; }
+@media (min-width: 1200px) { html { font-size: 19px; } }
+@media (min-width: 1600px) { html { font-size: 21px; } }
+@media (min-width: 2200px) { html { font-size: 24px; } }
+@media (max-width: 575.98px) { html { font-size: 17px; } }
+
+/* Use the whole screen: wider container with comfortable side padding */
+.container {
+    max-width: 1680px;
+    padding-left: clamp(1rem, 4vw, 4rem);
+    padding-right: clamp(1rem, 4vw, 4rem);
+}
+
+/* Pages that were squeezed into a narrow column */
+.eh-form-wide { max-width: 1100px; }
+.eh-auth { max-width: 560px; }
+.eh-hero p.lead, .eh-section .intro, .eh-cta p { max-width: 46rem; }
+
+/* Bigger controls and body copy */
+.form-control, .form-select { font-size: 1.05rem; padding: 0.7rem 0.9rem; }
+.btn-eh, .btn-eh-dark, .btn-eh-outline, .btn-eh-outline-dark, .btn-event, .btn-event-outline { font-size: 1.05rem; }
+.btn-sm { font-size: 0.95rem; }
+.alert { font-size: 1.05rem; }
+.table { font-size: 1.05rem; }
+.eh-reasons { font-size: 1rem; }
+.eh-status { font-size: 0.95rem; }
+.eh-facts dd { font-size: 1.2rem; }
+.eh-dl { grid-template-columns: 13rem 1fr; }
+
+/* Grids fill the wider space */
+.eh-school-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+.eh-school-card { padding: 1.5rem; }
+.eh-school-card h3 { font-size: 1.35rem; }
+.eh-hero { padding: 5rem 0 6rem; }
+.eh-section { padding: 5.5rem 0; }
+
+@media (max-width: 575.98px) {
+    .eh-dl { grid-template-columns: 1fr; }
+    .eh-school-grid { grid-template-columns: 1fr; }
+}

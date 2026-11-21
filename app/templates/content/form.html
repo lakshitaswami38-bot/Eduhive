@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import field %}
+{% block title %}{{ heading }} - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <h1>{{ heading }}</h1>
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            {% for f in form if f.type not in ("CSRFTokenField", "SubmitField") %}
+                {% if f.type == "TextAreaField" %}{{ field(f, rows="5") }}
+                {% elif f.type == "DateTimeLocalField" %}{{ field(f, type="datetime-local") }}
+                {% else %}{{ field(f) }}{% endif %}
+            {% endfor %}
+            {{ form.submit(class="btn btn-eh") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

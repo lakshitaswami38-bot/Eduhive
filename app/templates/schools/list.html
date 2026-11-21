@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Schools - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h1>Find a school</h1>
+
+    <form method="get" class="eh-filter">
+        <input class="form-control" type="text" name="q" value="{{ q }}" placeholder="School name or city">
+        <select class="form-select" name="board">
+            <option value="">All boards</option>
+            {% for b in ["CBSE", "ICSE/ISC", "State Board", "IB", "Cambridge", "Other"] %}
+            <option value="{{ b }}" {{ "selected" if board == b }}>{{ b }}</option>
+            {% endfor %}
+        </select>
+        <input class="form-control" type="number" name="max_fee" min="0" value="{{ max_fee if max_fee is not none }}" placeholder="Max yearly fee (Rs.)">
+        <button class="btn btn-eh" type="submit">Search</button>
+    </form>
+
+    {% if schools %}
+    <p class="text-muted">{{ schools|length }} school{{ "s" if schools|length != 1 }} found</p>
+    <div class="eh-school-grid">
+        {% for s in schools %}
+        <a class="eh-school-card" href="{{ url_for('schools.public', school_id=s.id) }}">
+            <h3>{{ s.name }}</h3>
+            <p class="text-muted mb-2">{{ s.city }}, {{ s.state }} · {{ s.board }}</p>
+            {% if s.fee_min is not none %}
+            <p class="mb-0">Rs. {{ "{:,}".format(s.fee_min) }} - {{ "{:,}".format(s.fee_max) }} / year</p>
+            {% else %}
+            <p class="mb-0 text-muted">Profile not filled yet</p>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted mt-4">No schools found.</p>
+    {% endif %}
+</div>
+{% endblock %}

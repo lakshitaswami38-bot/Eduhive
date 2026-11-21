@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Choose how to use EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>How will you use EduHive?</h1>
+    <p class="text-muted">You cannot change this later in this version, so choose carefully.</p>
+
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="eh-choice-grid">
+            <div class="eh-who-col">
+                <h3>I run a school</h3>
+                <p>Register your school with its details and proof documents. After an admin verifies it, you can build a profile and post.</p>
+                {{ form.school(class="btn btn-eh") }}
+            </div>
+            <div class="eh-who-col">
+                <h3>I am a student, parent or teacher</h3>
+                <p>Search schools, set your priorities, see ranked matches, follow schools and join events.</p>
+                {{ form.other(class="btn btn-eh-dark") }}
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

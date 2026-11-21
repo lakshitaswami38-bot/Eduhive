@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import field %}
+
+{% block title %}Log in - EduHive{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="eh-auth">
+        <h1>Welcome back</h1>
+        <p class="text-muted">New here? <a href="{{ url_for('auth.signup') }}">Create an account</a></p>
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+            {{ field(form.email, autocomplete="email") }}
+            {{ field(form.password, autocomplete="current-password") }}
+            {{ form.submit(class="btn btn-eh w-100") }}
+        </form>
+    </div>
+</div>
+{% endblock %}

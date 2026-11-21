@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_formhelpers.html" import field %}
+
+{% block title %}{{ school.name }} - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <a href="{{ url_for('admin.schools') }}">&larr; All applications</a>
+        <h1 class="mt-2">{{ school.name }}</h1>
+        <p><span class="eh-status eh-status-{{ school.status }}">{{ school.status|capitalize }}</span></p>
+
+        {% if school.status == "rejected" %}
+        <div class="alert alert-warning"><strong>Rejection reason:</strong> {{ school.rejection_reason }}</div>
+        {% endif %}
+
+        <h2 class="eh-form-h">Details</h2>
+        <dl class="eh-dl">
+            <dt>Applicant</dt><dd>{{ school.owner.name }} ({{ school.owner.email }})</dd>
+            <dt>UDISE+ code</dt><dd>{{ school.udise_code }}</dd>
+            <dt>Board</dt><dd>{{ school.board }}</dd>
+            <dt>Established</dt><dd>{{ school.established_year }} ({{ school.years_running }} years)</dd>
+            <dt>Address</dt><dd>{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</dd>
+            <dt>Principal's phone</dt><dd>{{ school.principal_phone }}</dd>
+            <dt>Official email</dt><dd>{{ school.official_email }}</dd>
+            <dt>Submitted</dt><dd>{{ school.submitted_at.strftime('%d %b %Y') if school.submitted_at }}</dd>
+        </dl>
+
+        <h2 class="eh-form-h">Proof documents</h2>
+        <ul class="eh-doclist">
+            {% for key, label, required in doc_types %}
+            {% set d = school.document(key) %}
+            <li>
+                <span>{{ label }}</span>
+                {% if d %}<a href="{{ url_for('schools.document', doc_id=d.id) }}" target="_blank" rel="noopener">{{ d.original_name }}</a>
+                {% else %}<span class="text-muted">Not uploaded</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+
+        {% if school.status == "pending" %}
+        <h2 class="eh-form-h">Decision</h2>
+        <form method="post" action="{{ url_for('admin.approve', school_id=school.id) }}" class="mb-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-eh">Approve school</button>
+        </form>
+
+        <form method="post" action="{{ url_for('admin.reject', school_id=school.id) }}" novalidate>
+            {{ form.hidden_tag() }}
+            {{ field(form.reason, rows="4") }}
+            {{ form.submit(class="btn btn-eh-dark") }}
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

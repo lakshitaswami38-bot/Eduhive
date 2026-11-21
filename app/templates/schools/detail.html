@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}{{ school.name }} - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        {% if school.status != "approved" %}
+        <div class="alert alert-warning">This school is not approved yet, so only you and admins can see this page.</div>
+        {% endif %}
+        <h1>{{ school.name }}</h1>
+        <p class="text-muted">{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</p>
+                {% if school.status == "approved" %}
+        <p class="text-muted mb-2">{{ followers }} follower{{ "s" if followers != 1 }}</p>
+        {% if current_user.is_authenticated and current_user.role == "user" %}
+            {% if following %}
+            <form method="post" action="{{ url_for('follows.unfollow', school_id=school.id) }}" class="mb-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-eh-outline btn-sm" type="submit">Following (click to unfollow)</button>
+            </form>
+            {% else %}
+            <form method="post" action="{{ url_for('follows.follow', school_id=school.id) }}" class="mb-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-eh btn-sm" type="submit">Follow this school</button>
+            </form>
+            {% endif %}
+        {% elif not current_user.is_authenticated %}
+        <a class="btn btn-eh btn-sm mb-3" href="{{ url_for('auth.login', next=request.path) }}">Log in to follow</a>
+        {% endif %}
+        {% endif %}
+
+        {% if current_user.is_authenticated and current_user.id == school.owner_id and school.status == "approved" %}
+        <a class="btn btn-eh-dark btn-sm mb-3" href="{{ url_for('schools.profile') }}">Edit profile</a>
+        {% endif %}
+
+        {% if school.about %}
+        <p>{{ school.about }}</p>
+
+        <h2 class="eh-form-h">At a glance</h2>
+        <dl class="eh-dl">
+            <dt>Board</dt><dd>{{ school.board }}</dd>
+            <dt>Medium</dt><dd>{{ school.medium }}</dd>
+            <dt>Classes</dt><dd>{{ school.class_from }} to {{ school.class_to }}</dd>
+            <dt>Yearly fee</dt><dd>Rs. {{ "{:,}".format(school.fee_min) }} - {{ "{:,}".format(school.fee_max) }}</dd>
+            <dt>Established</dt><dd>{{ school.established_year }} ({{ school.years_running }} years)</dd>
+            <dt>Students</dt><dd>{{ school.student_count }}</dd>
+            <dt>Teachers</dt><dd>{{ school.teacher_count }}</dd>
+            {% if school.website %}<dt>Website</dt><dd><a href="{{ school.website }}" target="_blank" rel="noopener noreferrer">{{ school.website }}</a></dd>{% endif %}
+        </dl>
+
+        {% if facilities %}
+        <h2 class="eh-form-h">Facilities</h2>
+        <p>{{ facilities|join(", ") }}</p>
+        {% endif %}
+        {% else %}
+        <p class="text-muted">This school has not filled its profile yet.</p>
+        {% endif %}
+                {% set is_owner = current_user.is_authenticated and current_user.id == school.owner_id %}
+        {% if school.status == "approved" %}
+
+        <h2 class="eh-form-h">Upcoming events</h2>
+        {% if is_owner %}<a class="btn btn-event btn-sm mb-3" href="{{ url_for('content.new_event') }}">+ New event</a>{% endif %}
+        {% for e in events %}
+        <div class="eh-item">
+            <a href="{{ url_for('content.event_detail', event_id=e.id) }}"><strong>{{ e.title }}</strong></a>
+            <div class="text-muted">{{ e.starts_at.strftime('%d %b %Y, %I:%M %p') }} · {{ e.venue }}</div>
+            {% if is_owner %}
+            <form method="post" action="{{ url_for('content.delete_event', event_id=e.id) }}" class="mt-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-eh-outline btn-sm" type="submit">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted">No upcoming events.</p>
+        {% endfor %}
+
+        <h2 class="eh-form-h">Latest posts</h2>
+        {% if is_owner %}<a class="btn btn-eh btn-sm mb-3" href="{{ url_for('content.new_post') }}">+ New post</a>{% endif %}
+        {% for p in posts %}
+        <div class="eh-item">
+            <strong>{{ p.title }}</strong>
+            <div class="text-muted small">{{ p.created_at.strftime('%d %b %Y') }}</div>
+            <p class="eh-pre mb-1">{{ p.body }}</p>
+            {% if is_owner %}
+            <form method="post" action="{{ url_for('content.delete_post', post_id=p.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-eh-outline btn-sm" type="submit">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+        {% else %}
+        <p class="text-muted">No posts yet.</p>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

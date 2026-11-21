@@ -1,0 +1,175 @@
+{# Legacy template commented out
+{% extends "base.html" %}
+{% from "_formhelpers.html" import field %}
+
+{% block title %}Edit profile - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h1>School profile</h1>
+            <a class="btn btn-eh-dark" href="{{ url_for('profiles.public', school_id=school.id) }}">View public page</a>
+        </div>
+        <p class="text-muted">Only add information you are sure about. Families will see this on your public page.</p>
+
+        <h2 class="eh-form-h">Logo and photos</h2>
+        <p class="text-muted">Photos are saved as soon as you upload them. JPG or PNG, up to 5 MB each.</p>
+        <div class="row g-4">
+            <div class="col-md-5">
+                <form method="post" action="{{ url_for('profiles.upload_logo') }}" enctype="multipart/form-data">
+                    {{ logo_form.hidden_tag() }}
+                    <label class="form-label" for="logo">School logo</label>
+                    {% if school.logo %}
+                    <img class="eh-logo-preview" src="{{ url_for('profiles.photo', photo_id=school.logo.id) }}" alt="Current logo">
+                    {% endif %}
+                    {{ logo_form.logo(class="form-control mb-2", accept="image/png,image/jpeg") }}
+                    {{ logo_form.submit(class="btn btn-eh-dark btn-sm") }}
+                </form>
+            </div>
+            <div class="col-md-7">
+                <form method="post" action="{{ url_for('profiles.upload_gallery') }}" enctype="multipart/form-data">
+                    {{ gallery_form.hidden_tag() }}
+                    <label class="form-label" for="photos">Gallery ({{ school.gallery|length }} of {{ max_gallery }} used)</label>
+                    {{ gallery_form.photos(class="form-control mb-2", multiple=True, accept="image/png,image/jpeg") }}
+                    {{ gallery_form.submit(class="btn btn-eh-dark btn-sm") }}
+                </form>
+            </div>
+        </div>
+
+        {% if school.gallery %}
+        <div class="eh-gallery eh-gallery-manage mt-4">
+            {% for p in school.gallery %}
+            <figure>
+                <img src="{{ url_for('profiles.photo', photo_id=p.id) }}" alt="Gallery photo" loading="lazy">
+                <form method="post" action="{{ url_for('profiles.delete_photo', photo_id=p.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-eh-outline-dark">Remove</button>
+                </form>
+            </figure>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate>
+            {{ form.hidden_tag() }}
+
+            <h2 class="eh-form-h">About</h2>
+            {{ field(form.tagline, hint="One line that describes your school", maxlength="150") }}
+            {{ field(form.about, rows="5", maxlength="2000") }}
+
+            <h2 class="eh-form-h">School at a glance</h2>
+            <div class="row">
+                <div class="col-md-4">{{ field(form.medium) }}</div>
+                <div class="col-md-4">{{ field(form.classes_from) }}</div>
+                <div class="col-md-4">{{ field(form.classes_to) }}</div>
+                <div class="col-md-4">{{ field(form.total_students, inputmode="numeric") }}</div>
+                <div class="col-md-4">{{ field(form.fee_min, inputmode="numeric") }}</div>
+                <div class="col-md-4">{{ field(form.fee_max, inputmode="numeric") }}</div>
+            </div>
+
+            <h2 class="eh-form-h">Facilities</h2>
+            <div class="eh-checks">
+                {% for option in form.facilities %}
+                <div class="form-check">{{ option(class="form-check-input") }} {{ option.label(class="form-check-label") }}</div>
+                {% endfor %}
+            </div>
+            {% for error in form.facilities.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+            <h2 class="eh-form-h">Specialities</h2>
+            <p class="text-muted">What is your school known for? This helps match you with the right families.</p>
+            <div class="eh-checks">
+                {% for option in form.specialities %}
+                <div class="form-check">{{ option(class="form-check-input") }} {{ option.label(class="form-check-label") }}</div>
+                {% endfor %}
+            </div>
+            {% for error in form.specialities.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+
+            <h2 class="eh-form-h">Board exam results</h2>
+            <p class="text-muted">Pass percentage, as reported by your school. Leave a row empty if you do not want to show it.</p>
+            <div class="table-responsive">
+                <table class="table eh-table align-middle">
+                    <thead><tr><th>Year</th><th>Class 10 pass %</th><th>Class 12 pass %</th></tr></thead>
+                    <tbody>
+                        {% for row in form.results %}
+                        <tr>
+                            {% for f in (row.year, row.class10, row.class12) %}
+                            <td>
+                                {{ f(class="form-control" ~ (" is-invalid" if f.errors else ""), inputmode="decimal") }}
+                                {% for error in f.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="eh-form-h">Admissions</h2>
+            <div class="form-check mb-3">{{ form.admission_open(class="form-check-input") }} {{ form.admission_open.label(class="form-check-label") }}</div>
+            <div class="row">
+                <div class="col-md-5">{{ field(form.admission_deadline) }}</div>
+                <div class="col-md-7">{{ field(form.admission_url, hint="Link to your admission form, if you have one online") }}</div>
+            </div>
+
+            <h2 class="eh-form-h">Location</h2>
+            <p class="text-muted">
+                {% if school.profile and school.profile.latitude is not none %}
+                    {% if school.profile.location_source == "manual" %}You placed this pin yourself.
+                    {% elif school.profile.location_source == "pincode" %}This is an approximate spot found from your pincode.
+                    {% else %}This spot was found from your address.{% endif %}
+                    Click the map or drag the pin to correct it.
+                {% else %}
+                    We will try to find your address on the map when you save. You can also click the map to place the pin.
+                {% endif %}
+            </p>
+            <div id="map" class="eh-map mb-3"
+                 data-lat="{{ school.profile.latitude if school.profile and school.profile.latitude is not none else '' }}"
+                 data-lng="{{ school.profile.longitude if school.profile and school.profile.longitude is not none else '' }}"></div>
+            <div class="row">
+                <div class="col-md-6">{{ field(form.latitude, inputmode="decimal") }}</div>
+                <div class="col-md-6">{{ field(form.longitude, inputmode="decimal") }}</div>
+            </div>
+            <div class="form-check mb-4">{{ form.redetect(class="form-check-input") }} {{ form.redetect.label(class="form-check-label") }}</div>
+
+            {{ form.submit(class="btn btn-eh") }}
+        </form>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var el = document.getElementById("map");
+    if (!el || typeof L === "undefined") { return; }
+    var latInput = document.getElementById("latitude");
+    var lngInput = document.getElementById("longitude");
+    var hasPin = el.dataset.lat !== "" && el.dataset.lng !== "";
+    var start = hasPin ? [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)] : [22.9734, 78.6569];
+    var map = L.map(el).setView(start, hasPin ? 15 : 5);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    var marker = null;
+    function write(point) {
+        latInput.value = point.lat.toFixed(6);
+        lngInput.value = point.lng.toFixed(6);
+    }
+    function place(point) {
+        if (marker) {
+            marker.setLatLng(point);
+        } else {
+            marker = L.marker(point, { draggable: true }).addTo(map);
+            marker.on("dragend", function () { write(marker.getLatLng()); });
+        }
+        write(point);
+    }
+    if (hasPin) { place(L.latLng(start[0], start[1])); }
+    map.on("click", function (event) { place(event.latlng); });
+})();
+</script>
+{% endblock %}
+#}
