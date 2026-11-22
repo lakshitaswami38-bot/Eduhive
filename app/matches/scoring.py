@@ -76,10 +76,14 @@ def score_school(school, p):
         if school.results:
             latest_year = max(r.year for r in school.results)
             year_results = [r for r in school.results if r.year == latest_year]
-            avg_pct = sum(r.pass_percentage for r in year_results) / len(year_results)
-            frac = min(1.0, max(0.0, avg_pct / 100.0))
-            text = f"Board Results: {avg_pct:.1f}% avg in {latest_year} (Reported by school, not verified)"
-            parts.append(("results", p.w_results, frac, text, True))
+            pcts = [r.pass_percentage for r in year_results if r.pass_percentage is not None]
+            if pcts:
+                avg_pct = sum(pcts) / len(pcts)
+                frac = min(1.0, max(0.0, avg_pct / 100.0))
+                text = f"Board Results: {avg_pct:.1f}% avg in {latest_year} (Reported by school, not verified)"
+                parts.append(("results", p.w_results, frac, text, True))
+            else:
+                parts.append(("results", p.w_results, None, "Board results not provided by the school", False))
         else:
             parts.append(("results", p.w_results, None, "Board results not provided by the school", False))
 

@@ -187,6 +187,11 @@ class SchoolResult(db.Model):
 
     school = db.relationship("School", backref=db.backref("results", cascade="all, delete-orphan"))
 
+    @property
+    def pass_percentage(self):
+        vals = [float(v) for v in (self.class10_pass, self.class12_pass) if v is not None]
+        return sum(vals) / len(vals) if vals else None
+
 
 class SchoolPhoto(db.Model):
     __tablename__ = "school_photos"
