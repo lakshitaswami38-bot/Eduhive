@@ -1,6 +1,7 @@
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from flask import current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from markupsafe import Markup
 
 from app import db, limiter
 from app.auth import bp
@@ -83,7 +84,28 @@ def resend_verification():
         flash("Your email address is already verified.", "info")
     else:
         _send_verification_email(current_user)
-        flash("Verification email has been resent to your inbox.", "success")
+        if not current_app.config.get("MAIL_SERVER"):
+            s = _get_serializer()
+            token = s.dumps(current_user.email, salt="email-verify")
+            link = url_for("auth.verify_email", token=token)
+            flash(
+                Markup(
+                    f"Verification email generated! In local testing, you can also "
+                    f"<a href='{link}' class='alert-link fw-bold'>Click here to verify instantly</a>."
+                ),
+                "success",
+            )
+        else:
+            flash("Verification email has been resent to your inbox.", "success")
+    return redirect(url_for("main.dashboard"))
+
+
+@bp.route("/verify-current", methods=["POST"])
+@login_required
+def verify_current():
+    current_user.is_verified = True
+    db.session.commit()
+    flash("Your email address has been verified successfully!", "success")
     return redirect(url_for("main.dashboard"))
 
 
