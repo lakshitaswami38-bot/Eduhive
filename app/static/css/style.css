@@ -54,10 +54,16 @@ a:focus-visible, .btn:focus-visible {
 }
 .btn-eh:hover { background: var(--amber-soft); border-color: var(--amber-soft); color: var(--ink); }
 .btn-eh-outline {
-    background: transparent; color: #fff; font-weight: 700;
-    border: 2px solid var(--on-ink-muted); border-radius: 999px; padding: 0.7rem 1.6rem;
+    background: transparent; color: var(--event); font-weight: 700;
+    border: 2px solid var(--event); border-radius: 999px; padding: 0.7rem 1.6rem;
 }
-.btn-eh-outline:hover { border-color: #fff; color: #fff; }
+.btn-eh-outline:hover { background: var(--event); border-color: var(--event); color: #fff; }
+.eh-nav .btn-eh-outline, .eh-hero .btn-eh-outline, .eh-school-hero .btn-eh-outline {
+    color: #fff; border-color: var(--on-ink-muted);
+}
+.eh-nav .btn-eh-outline:hover, .eh-hero .btn-eh-outline:hover, .eh-school-hero .btn-eh-outline:hover {
+    border-color: #fff; color: #fff; background: transparent;
+}
 .btn-eh-dark {
     background: var(--ink); color: #fff; font-weight: 700;
     border: 2px solid var(--ink); border-radius: 999px; padding: 0.7rem 1.6rem;
