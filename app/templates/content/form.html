@@ -5,7 +5,7 @@
 <div class="container py-5">
     <div class="eh-form-wide">
         <h1>{{ heading }}</h1>
-        <form method="post" novalidate>
+        <form method="post" enctype="multipart/form-data" novalidate>
             {{ form.hidden_tag() }}
             {% for f in form if f.type not in ("CSRFTokenField", "SubmitField") %}
                 {% if f.type == "TextAreaField" %}{{ field(f, rows="5") }}
