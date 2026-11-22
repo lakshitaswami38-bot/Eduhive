@@ -187,7 +187,10 @@
             alert('Geolocation is not supported by your browser.');
             return;
         }
-        this.innerHTML = 'Locating...';
+        const btn = this;
+        btn.innerHTML = 'Locating...';
+        btn.disabled = true;
+
         navigator.geolocation.getCurrentPosition(
             function(pos) {
                 document.getElementById('latInput').value = pos.coords.latitude;
@@ -196,10 +199,19 @@
                 document.getElementById('nearbyForm').submit();
             },
             function(err) {
-                alert('Could not retrieve your location. Please enter a pincode or city name.');
-                document.getElementById('btnGeolocate').innerHTML = '&target; Use My Location';
+                btn.disabled = false;
+                btn.innerHTML = '&target; Use My Location';
+                let msg = 'Could not retrieve your location. Please enter a pincode or city name.';
+                if (err.code === 1) {
+                    msg = 'Location permission was denied. Please allow location access in your browser (click the lock icon in the address bar) or enter your pincode/city.';
+                } else if (err.code === 2) {
+                    msg = 'Location unavailable from Windows / Wi-Fi. Please enter your pincode or city name.';
+                } else if (err.code === 3) {
+                    msg = 'Location request timed out. Please enter your pincode or city name.';
+                }
+                alert(msg);
             },
-            { timeout: 10000 }
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
         );
     });
 </script>

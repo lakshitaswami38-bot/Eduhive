@@ -39,6 +39,20 @@ def geocode_pincode(pincode):
     return None
 
 
+def geocode_place(query):
+    """Geocode a city, area, locality or landmark to (latitude, longitude) or None."""
+    if not query:
+        return None
+    geolocator = Nominatim(user_agent="EduHive-college-project", timeout=5)
+    try:
+        place = geolocator.geocode(f"{query}, India", country_codes="in")
+        if place and in_india(place.latitude, place.longitude):
+            return place.latitude, place.longitude
+    except (GeopyError, OSError):
+        return None
+    return None
+
+
 def geocode_school(address, city, state, pincode):
     """Find a school's coordinates with OpenStreetMap's Nominatim (free).
 

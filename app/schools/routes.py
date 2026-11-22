@@ -737,11 +737,19 @@ def nearby():
                 db.select(School).filter(
                     School.status == "approved",
                     School.latitude.is_not(None),
-                    db.or_(School.city.ilike(f"%{q}%"), School.pincode == q)
+                    db.or_(
+                        School.city.ilike(f"%{q}%"),
+                        School.pincode == q,
+                        School.address.ilike(f"%{q}%"),
+                        School.name.ilike(f"%{q}%"),
+                    ),
                 ).limit(1)
             )
             if matching_school:
                 center = (matching_school.latitude, matching_school.longitude)
+        if not center:
+            from app.schools.geocode import geocode_place
+            center = geocode_place(q)
 
     schools_with_coords = db.session.scalars(
         db.select(School).filter(
