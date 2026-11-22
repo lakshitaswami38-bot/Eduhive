@@ -40,7 +40,7 @@
                     <li class="nav-item ms-lg-2">
                         <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-eh-outline btn-sm px-3">Log out</button>
+                            <button type="submit" class="btn btn-outline-light btn-sm px-3 fw-bold">Log out</button>
                         </form>
                     </li>
                     {% else %}

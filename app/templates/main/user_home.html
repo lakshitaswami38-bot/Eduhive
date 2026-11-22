@@ -2,11 +2,20 @@
 {% block title %}Dashboard - EduHive{% endblock %}
 {% block content %}
 <div class="container py-5">
-    <h1>Welcome, {{ current_user.name }}</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h1 class="mb-0">Welcome, {{ current_user.name }}</h1>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm px-3">Log out</button>
+        </form>
+    </div>
     <p class="text-muted">Tell us what matters to you and we will rank schools for you.</p>
-    <a class="btn btn-eh" href="{{ url_for('matches.priorities') }}">My priorities</a>
-    <a class="btn btn-eh-dark" href="{{ url_for('matches.ranked') }}">See my matches</a>
-    <a class="btn btn-event" href="{{ url_for('content.events') }}">Events</a>
-    <a class="btn btn-eh" href="{{ url_for('follows.feed') }}">My feed</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-eh" href="{{ url_for('matches.priorities') }}">My priorities</a>
+        <a class="btn btn-eh-dark" href="{{ url_for('matches.ranked') }}">See my matches</a>
+        <a class="btn btn-event" href="{{ url_for('content.events') }}">Events</a>
+        <a class="btn btn-eh" href="{{ url_for('follows.feed') }}">My feed</a>
+        <a class="btn btn-eh-outline-dark" href="{{ url_for('matches.shortlist') }}">My shortlist</a>
+    </div>
 </div>
 {% endblock %}

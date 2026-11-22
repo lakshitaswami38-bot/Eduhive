@@ -188,7 +188,7 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-@bp.route("/logout", methods=["POST"])
+@bp.route("/logout", methods=["GET", "POST"])
 def logout():
     logout_user()
     flash("You have been logged out.", "info")

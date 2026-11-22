@@ -2,18 +2,23 @@
 {% block title %}{{ school.name if school else 'School Dashboard' }} - EduHive{% endblock %}
 {% block content %}
 <div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h1 class="mb-0">{{ 'Welcome, ' ~ school.name if school else 'School Registration' }}</h1>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm px-3">Log out</button>
+        </form>
+    </div>
     {% if school %}
-    <h1>Welcome, {{ school.name }}</h1>
     <p class="text-muted">Your school is verified. Keep your profile up to date so families can find you.</p>
     <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-eh" href="{{ url_for('schools.profile') }}">Edit school profile</a>
         <a class="btn btn-eh-dark" href="{{ url_for('schools.public', school_id=school.id) }}">View public page</a>
-        <a class="btn btn-eh-outline" href="{{ url_for('schools.inquiries') }}">Admission Inquiries</a>
-        <a class="btn btn-eh-outline" href="{{ url_for('schools.connections') }}">School Connections</a>
+        <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.inquiries') }}">Admission Inquiries</a>
+        <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.connections') }}">School Connections</a>
         <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.status') }}">Application details</a>
     </div>
     {% else %}
-    <h1>School Registration</h1>
     <p class="text-muted">Please verify your email address to begin registering your school.</p>
     {% endif %}
 </div>
