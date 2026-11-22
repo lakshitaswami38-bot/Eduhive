@@ -22,8 +22,20 @@
             <div class="collapse navbar-collapse" id="ehMenu">
                                 <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('schools.listing') }}">Schools</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('schools.nearby') }}">Nearby</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('content.events') }}">Events</a></li>
                     {% if current_user.is_authenticated %}
+                        {% if current_user.role == 'user' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('matches.ranked') }}">Matches</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('matches.shortlist') }}">Shortlist</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('follows.feed') }}">Feed</a></li>
+                        {% elif current_user.role == 'school' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('follows.feed') }}">Feed</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('schools.connections') }}">Network</a></li>
+                        {% elif current_user.role == 'admin' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.schools') }}">Review</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('admin.users') }}">Users</a></li>
+                        {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
                     <li class="nav-item ms-lg-2">
                         <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
@@ -39,6 +51,18 @@
             </div>
         </div>
     </nav>
+
+    {% if current_user.is_authenticated and not current_user.is_verified %}
+    <div class="bg-warning-subtle text-dark border-bottom py-2 small">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span>&bull; Your email address ({{ current_user.email }}) is not verified yet. Verification is required before registering a school.</span>
+            <form method="post" action="{{ url_for('auth.resend_verification') }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-sm btn-link text-dark p-0 fw-bold">Resend verification</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}

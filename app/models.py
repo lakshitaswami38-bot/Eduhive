@@ -14,6 +14,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="unassigned")
+    is_verified = db.Column(db.Boolean, default=False, nullable=False, server_default="0")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def set_password(self, password):
@@ -55,6 +56,7 @@ class School(db.Model):
     official_email = db.Column(db.String(120), nullable=False)
 
     status = db.Column(db.String(20), nullable=False, default="pending", index=True)
+    is_suspended = db.Column(db.Boolean, default=False, nullable=False, server_default="0", index=True)
     rejection_reason = db.Column(db.Text)
     submitted_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     reviewed_at = db.Column(db.DateTime)
@@ -70,6 +72,13 @@ class School(db.Model):
     teacher_count = db.Column(db.Integer)
     facilities = db.Column(db.String(255))
     website = db.Column(db.String(200))
+
+    admission_open = db.Column(db.Boolean, nullable=False, default=False, index=True)
+    admission_deadline = db.Column(db.Date, index=True)
+    admission_url = db.Column(db.String(300))
+    latitude = db.Column(db.Float(53), index=True)
+    longitude = db.Column(db.Float(53), index=True)
+    location_source = db.Column(db.String(20))
 
     owner = db.relationship(
         "User", foreign_keys=[owner_id], backref=db.backref("school", uselist=False)
@@ -206,9 +215,25 @@ class Post(db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
     title = db.Column(db.String(150), nullable=False)
     body = db.Column(db.Text, nullable=False)
+    photo_name = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     school = db.relationship("School", backref=db.backref("posts", cascade="all, delete-orphan"))
+
+
+class PostLike(db.Model):
+    __tablename__ = "post_likes"
+    __table_args__ = (
+        db.UniqueConstraint("post_id", "user_id", name="uq_post_like_user"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    post_id = db.Column(db.Integer, db.ForeignKey("posts.id"), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    post = db.relationship("Post", backref=db.backref("likes", cascade="all, delete-orphan"))
+    user = db.relationship("User", backref=db.backref("likes", cascade="all, delete-orphan"))
 
 
 class Event(db.Model):
@@ -248,7 +273,36 @@ class EventRegistration(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey("events.id"), nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=True, index=True)
+    participants = db.Column(db.Integer, nullable=False, default=1)
+    note = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    registered_school = db.relationship("School", foreign_keys=[school_id])
+    user = db.relationship("User", foreign_keys=[user_id])
+
+
+class Connection(db.Model):
+    __tablename__ = "connections"
+    __table_args__ = (
+        db.UniqueConstraint("school_low_id", "school_high_id", name="uq_connection_pair"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    requester_school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    receiver_school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    school_low_id = db.Column(db.Integer, nullable=False, index=True)
+    school_high_id = db.Column(db.Integer, nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=False, default="pending", index=True)  # pending, accepted, declined, cancelled
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    responded_at = db.Column(db.DateTime)
+
+    requester = db.relationship("School", foreign_keys=[requester_school_id])
+    receiver = db.relationship("School", foreign_keys=[receiver_school_id])
+
+    @staticmethod
+    def pair_ids(id_a, id_b):
+        return min(id_a, id_b), max(id_a, id_b)
 
 
 class UserPriority(db.Model):
@@ -262,11 +316,20 @@ class UserPriority(db.Model):
     city = db.Column(db.String(80))
     class_needed = db.Column(db.Integer)
     facilities = db.Column(db.String(255))
+    specialities = db.Column(db.String(255))
+    latitude = db.Column(db.Float(53))
+    longitude = db.Column(db.Float(53))
+    max_distance = db.Column(db.Integer)
+    admission_only = db.Column(db.Boolean, nullable=False, default=False)
 
     w_fee = db.Column(db.Integer, nullable=False, default=3)
     w_board = db.Column(db.Integer, nullable=False, default=3)
     w_city = db.Column(db.Integer, nullable=False, default=3)
     w_facilities = db.Column(db.Integer, nullable=False, default=3)
+    w_specialities = db.Column(db.Integer, nullable=False, default=3)
+    w_results = db.Column(db.Integer, nullable=False, default=3)
+    w_distance = db.Column(db.Integer, nullable=False, default=3)
+
     updated_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc)
     )
@@ -276,6 +339,10 @@ class UserPriority(db.Model):
     @property
     def facility_list(self):
         return [f for f in (self.facilities or "").split(",") if f]
+
+    @property
+    def speciality_list(self):
+        return [s for s in (self.specialities or "").split(",") if s]
 
 
 class Follow(db.Model):
@@ -291,3 +358,35 @@ class Follow(db.Model):
 
     school = db.relationship("School", backref=db.backref("followers", cascade="all, delete-orphan"))
     user = db.relationship("User", backref=db.backref("follows", cascade="all, delete-orphan"))
+
+
+class UserShortlist(db.Model):
+    __tablename__ = "user_shortlists"
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "school_id", name="uq_user_shortlist"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("shortlists", cascade="all, delete-orphan"))
+    school = db.relationship("School", backref=db.backref("shortlisted_by", cascade="all, delete-orphan"))
+
+
+class AdmissionInquiry(db.Model):
+    __tablename__ = "admission_inquiries"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    school_id = db.Column(db.Integer, db.ForeignKey("schools.id"), nullable=False, index=True)
+    child_class = db.Column(db.Integer, nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="new", index=True)  # new, replied
+    reply = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    replied_at = db.Column(db.DateTime)
+
+    user = db.relationship("User", foreign_keys=[user_id])
+    school = db.relationship("School", foreign_keys=[school_id], backref=db.backref("inquiries", cascade="all, delete-orphan"))

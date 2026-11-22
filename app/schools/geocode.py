@@ -1,3 +1,4 @@
+import math
 import time
 
 from geopy.exc import GeopyError
@@ -10,6 +11,32 @@ LNG_RANGE = (68.0, 97.5)
 
 def in_india(lat, lng):
     return LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LNG_RANGE[0] <= lng <= LNG_RANGE[1]
+
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculates the great-circle distance between two points in km."""
+    if None in (lat1, lon1, lat2, lon2):
+        return None
+    r = 6371.0  # Earth radius in km
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lon2 - lon1)
+    a = (math.sin(delta_phi / 2.0) ** 2 +
+         math.cos(phi1) * math.cos(phi2) * (math.sin(delta_lambda / 2.0) ** 2))
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return round(r * c, 2)
+
+
+def geocode_pincode(pincode):
+    """Geocode an Indian pincode to (latitude, longitude) or None."""
+    geolocator = Nominatim(user_agent="EduHive-college-project", timeout=5)
+    try:
+        place = geolocator.geocode(f"{pincode}, India", country_codes="in")
+        if place and in_india(place.latitude, place.longitude):
+            return place.latitude, place.longitude
+    except (GeopyError, OSError):
+        return None
+    return None
 
 
 def geocode_school(address, city, state, pincode):

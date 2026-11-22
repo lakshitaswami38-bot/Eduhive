@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}My Shortlisted Schools - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h2 mb-1">My Shortlist</h1>
+            <p class="text-muted mb-0">Your saved schools (up to 20). Select 2 or 3 to compare side by side.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('matches.ranked') }}" class="btn btn-eh-outline">&larr; View Matches</a>
+        </div>
+    </div>
+
+    {% if schools %}
+    <form method="get" action="{{ url_for('matches.compare') }}" id="compareForm" onsubmit="return validateCompare();">
+        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
+            <div>
+                <span class="fw-semibold">Select 2 or 3 schools to compare:</span>
+                <span id="selectedCount" class="badge bg-secondary ms-2">0 selected</span>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-eh btn-sm" id="btnCompare" disabled>
+                    Compare Side by Side &rarr;
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            {% for s in schools %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 position-relative">
+                    <div class="card-body">
+                        <div class="form-check position-absolute top-0 end-0 mt-3 me-3">
+                            <input class="form-check-input compare-checkbox" type="checkbox" name="id" value="{{ s.id }}" id="chk_{{ s.id }}">
+                        </div>
+
+                        <div class="d-flex align-items-center mb-3">
+                            {% if s.logo_photo %}
+                            <img src="{{ url_for('schools.photo', filename=s.logo_photo.filename) }}" alt="{{ s.name }}" class="rounded-circle me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 48px; height: 48px;">
+                                {{ s.name[:1] }}
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h5 class="card-title mb-0">
+                                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                                </h5>
+                                <small class="text-muted">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</small>
+                            </div>
+                        </div>
+
+                        <p class="small text-secondary mb-2">
+                            <strong>Fee:</strong> {% if s.fee_min %}&#8377;{{ "{:,}".format(s.fee_min) }}{% if s.fee_max %} - &#8377;{{ "{:,}".format(s.fee_max) }}{% endif %}/yr{% else %}Not specified{% endif %}
+                        </p>
+                        <p class="small text-secondary mb-3">
+                            <strong>Classes:</strong> {% if s.class_from %}Class {{ s.class_from }} to {{ s.class_to }}{% else %}Not specified{% endif %}
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <a href="{{ url_for('schools.public', school_id=s.id) }}" class="btn btn-sm btn-eh-outline">View Profile</a>
+                            <button type="submit" form="removeForm_{{ s.id }}" class="btn btn-sm btn-link text-danger text-decoration-none p-0">Remove</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </form>
+
+    <!-- Hidden individual remove forms -->
+    {% for s in schools %}
+    <form id="removeForm_{{ s.id }}" method="post" action="{{ url_for('matches.toggle_shortlist', school_id=s.id) }}" class="d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endfor %}
+
+    {% else %}
+    <div class="text-center py-5 bg-light rounded-3">
+        <h4 class="h5 text-muted mb-2">Your shortlist is currently empty</h4>
+        <p class="text-muted small mb-3">Browse ranked schools or the public directory and click &star; Shortlist to save schools here.</p>
+        <a href="{{ url_for('matches.ranked') }}" class="btn btn-eh">Find Schools &rarr;</a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    const checkboxes = document.querySelectorAll('.compare-checkbox');
+    const btnCompare = document.getElementById('btnCompare');
+    const countBadge = document.getElementById('selectedCount');
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateCount);
+    });
+
+    function updateCount() {
+        const checked = document.querySelectorAll('.compare-checkbox:checked');
+        const count = checked.length;
+        if (countBadge) countBadge.textContent = count + ' selected';
+
+        if (count >= 2 && count <= 3) {
+            btnCompare.disabled = false;
+        } else {
+            btnCompare.disabled = true;
+        }
+
+        if (count > 3) {
+            alert('You can compare at most 3 schools at once.');
+            this.checked = false;
+            updateCount();
+        }
+    }
+
+    function validateCompare() {
+        const checked = document.querySelectorAll('.compare-checkbox:checked');
+        if (checked.length < 2 || checked.length > 3) {
+            alert('Please select exactly 2 or 3 schools to compare.');
+            return false;
+        }
+        return true;
+    }
+</script>
+{% endblock %}

@@ -1,31 +1,176 @@
 {% extends "base.html" %}
-{% block title %}My matches - EduHive{% endblock %}
+{% block title %}My Matches - EduHive{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <h1>Your matches</h1>
-    <a href="{{ url_for('matches.priorities') }}">Change my priorities</a>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h2 mb-1">Your Ranked School Matches</h1>
+            <p class="text-muted mb-0">Rule-based weighted ranking based on your priorities and transparency data.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('matches.priorities') }}" class="btn btn-eh-outline">&larr; Edit Priorities</a>
+        </div>
+    </div>
 
     {% if not has_criteria %}
-    <p class="text-muted mt-4">You have not filled any priority yet. Add at least a budget, board, city or facility.</p>
+    <div class="alert alert-info">
+        You have not specified any priorities yet. <a href="{{ url_for('matches.priorities') }}">Set your preferences</a> to see matched schools.
+    </div>
     {% elif results %}
-    <div class="eh-school-grid">
-        {% for r in results %}
-        <a class="eh-school-card" href="{{ url_for('schools.public', school_id=r.school.id) }}">
-            <div class="d-flex justify-content-between align-items-start">
-                <h3>{{ r.school.name }}</h3>
-                <span class="eh-score">{{ r.score }}%</span>
+
+    <!-- Live Sliders Offcanvas / Accordion -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 h6 fw-bold">Live Weight Sliders (Instant Re-ranking)</h5>
+            <small class="text-muted">Adjust sliders to see live re-calculated rankings</small>
+        </div>
+        <div class="card-body">
+            <div class="row g-3" id="slidersContainer">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Fee Weight</span><span id="val_fee">{{ weights.fee }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="fee" min="1" max="5" value="{{ weights.fee }}">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Board Weight</span><span id="val_board">{{ weights.board }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="board" min="1" max="5" value="{{ weights.board }}">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>City Weight</span><span id="val_city">{{ weights.city }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="city" min="1" max="5" value="{{ weights.city }}">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Facilities Weight</span><span id="val_facilities">{{ weights.facilities }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="facilities" min="1" max="5" value="{{ weights.facilities }}">
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Specialities Weight</span><span id="val_specialities">{{ weights.specialities }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="specialities" min="1" max="5" value="{{ weights.specialities }}">
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Results Weight</span><span id="val_results">{{ weights.results }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="results" min="1" max="5" value="{{ weights.results }}">
+                </div>
+                <div class="col-md-4 col-sm-6">
+                    <label class="form-label small fw-semibold d-flex justify-content-between">
+                        <span>Distance Weight</span><span id="val_distance">{{ weights.distance }}</span>
+                    </label>
+                    <input type="range" class="form-range weight-slider" data-criterion="distance" min="1" max="5" value="{{ weights.distance }}">
+                </div>
             </div>
-            <p class="text-muted mb-2">{{ r.school.city }}, {{ r.school.state }} · {{ r.school.board }}</p>
-            <ul class="eh-reasons">
+        </div>
+    </div>
+
+    <!-- Ranked Cards Container -->
+    <div class="eh-school-grid" id="schoolsGrid">
+        {% for r in results %}
+        {% set s = r.school %}
+        <div class="eh-school-card position-relative" id="card-{{ s.id }}" data-school-id="{{ s.id }}" data-score="{{ r.score }}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <h3 class="h5 mb-0">
+                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                </h3>
+                <span class="eh-score" id="score-{{ s.id }}">{{ r.score }}%</span>
+            </div>
+            <p class="text-muted small mb-2">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</p>
+            {% if s.admission_open %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle mb-2">Admissions Open</span>
+            {% endif %}
+            <ul class="eh-reasons list-unstyled small mt-2 mb-0">
                 {% for text, ok in r.reasons %}
-                <li class="{{ 'ok' if ok else 'miss' }}">{{ "✓" if ok else "✗" }} {{ text }}</li>
+                {% if ok is none %}
+                <li class="text-muted">&bull; {{ text }}</li>
+                {% elif ok %}
+                <li class="ok text-success">&check; {{ text }}</li>
+                {% else %}
+                <li class="miss text-danger">&cross; {{ text }}</li>
+                {% endif %}
                 {% endfor %}
             </ul>
-        </a>
+            <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('schools.public', school_id=s.id) }}" class="btn btn-sm btn-eh-outline">View Details &rarr;</a>
+            </div>
+        </div>
         {% endfor %}
     </div>
+
     {% else %}
-    <p class="text-muted mt-4">No schools match yet. Schools appear here after they are approved and fill their profile.</p>
+    <div class="text-center py-5 text-muted">
+        <p>No schools matched your current hard criteria (e.g. required class or admissions open).</p>
+        <a href="{{ url_for('matches.priorities') }}" class="btn btn-eh">Adjust Priorities</a>
+    </div>
     {% endif %}
 </div>
+
+<script>
+    const schoolData = [
+        {% for r in results %}
+        {
+            id: {{ r.school.id }},
+            sub_scores: {{ r.sub_scores|tojson }}
+        },
+        {% endfor %}
+    ];
+
+    const sliders = document.querySelectorAll('.weight-slider');
+    sliders.forEach(slider => {
+        slider.addEventListener('input', function() {
+            const crit = this.getAttribute('data-criterion');
+            document.getElementById('val_' + crit).textContent = this.value;
+            rerank();
+        });
+    });
+
+    function rerank() {
+        const weights = {};
+        sliders.forEach(s => {
+            weights[s.getAttribute('data-criterion')] = parseInt(s.value, 10);
+        });
+
+        const grid = document.getElementById('schoolsGrid');
+        if (!grid) return;
+
+        schoolData.forEach(item => {
+            let totalWeight = 0;
+            let weightedSum = 0;
+
+            for (const [crit, score] of Object.entries(item.sub_scores)) {
+                if (score !== null && weights[crit] !== undefined) {
+                    totalWeight += weights[crit];
+                    weightedSum += weights[crit] * score;
+                }
+            }
+
+            const newScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+            const card = document.getElementById('card-' + item.id);
+            const badge = document.getElementById('score-' + item.id);
+            if (card && badge) {
+                card.setAttribute('data-score', newScore);
+                badge.textContent = newScore + '%';
+            }
+        });
+
+        // Re-sort cards in DOM
+        const cards = Array.from(grid.children);
+        cards.sort((a, b) => {
+            const scoreA = parseInt(a.getAttribute('data-score') || '0', 10);
+            const scoreB = parseInt(b.getAttribute('data-score') || '0', 10);
+            return scoreB - scoreA;
+        });
+
+        cards.forEach(card => grid.appendChild(card));
+    }
+</script>
 {% endblock %}

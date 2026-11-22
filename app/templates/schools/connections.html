@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}School Connections - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">School Network &amp; Connections</h1>
+            <p class="text-muted mb-0">Connect with peer institutions, share updates and collaborate on events.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('follows.feed', tab='network') }}" class="btn btn-eh-outline">
+                &larr; View Network Feed
+            </a>
+        </div>
+    </div>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-pills mb-4" id="connTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="active-tab" data-bs-toggle="pill" data-bs-target="#active-conns" type="button" role="tab">
+                My Connections <span class="badge bg-secondary ms-1">{{ active_conns|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pending-tab" data-bs-toggle="pill" data-bs-target="#pending-conns" type="button" role="tab">
+                Pending Requests 
+                {% if received_pending %}
+                <span class="badge bg-warning text-dark ms-1">{{ received_pending|length }} new</span>
+                {% elif sent_pending %}
+                <span class="badge bg-secondary ms-1">{{ sent_pending|length }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="suggestions-tab" data-bs-toggle="pill" data-bs-target="#suggestions-conns" type="button" role="tab">
+                Suggestions <span class="badge bg-secondary ms-1">{{ suggestions|length }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="connTabsContent">
+        <!-- Tab 1: Active Connections -->
+        <div class="tab-pane fade show active" id="active-conns" role="tabpanel">
+            {% if active_conns %}
+            <div class="row g-3">
+                {% for item in active_conns %}
+                {% set s = item.school %}
+                {% set c = item.connection %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                {% if s.logo_photo %}
+                                <img src="{{ url_for('schools.photo', filename=s.logo_photo.filename) }}" alt="{{ s.name }}" class="rounded-circle me-3" style="width: 52px; height: 52px; object-fit: cover;">
+                                {% else %}
+                                <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 52px; height: 52px; font-size: 1.25rem;">
+                                    {{ s.name[:1] }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <h5 class="card-title mb-0">
+                                        <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                                    </h5>
+                                    <small class="text-muted">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</small>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <a href="{{ url_for('schools.public', school_id=s.id) }}" class="btn btn-sm btn-eh-outline">View Profile</a>
+                                <form method="post" action="{{ url_for('schools.remove_connection', conn_id=c.id) }}" onsubmit="return confirm('Disconnect from {{ s.name }}?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5 bg-light rounded-3">
+                <p class="text-muted mb-3">You don't have any connected schools yet.</p>
+                <button class="btn btn-eh" onclick="document.getElementById('suggestions-tab').click()">Browse Suggested Schools</button>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Tab 2: Pending Requests -->
+        <div class="tab-pane fade" id="pending-conns" role="tabpanel">
+            <h4 class="h5 mb-3">Received Invitations</h4>
+            {% if received_pending %}
+            <div class="row g-3 mb-4">
+                {% for c in received_pending %}
+                {% set s = c.requester %}
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                                </h6>
+                                <p class="text-muted small mb-0">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</p>
+                                <small class="text-muted">Requested on {{ c.created_at.strftime('%d %b %Y') }}</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="{{ url_for('schools.accept_connection', conn_id=c.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-eh">Accept</button>
+                                </form>
+                                <form method="post" action="{{ url_for('schools.decline_connection', conn_id=c.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Decline</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted small mb-4">No pending invitations received.</p>
+            {% endif %}
+
+            <h4 class="h5 mb-3">Sent Requests</h4>
+            {% if sent_pending %}
+            <div class="row g-3">
+                {% for c in sent_pending %}
+                {% set s = c.receiver %}
+                <div class="col-md-6">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                                </h6>
+                                <p class="text-muted small mb-0">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</p>
+                                <small class="text-muted">Sent on {{ c.created_at.strftime('%d %b %Y') }}</small>
+                            </div>
+                            <div>
+                                <form method="post" action="{{ url_for('schools.cancel_connection', conn_id=c.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Cancel Request</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">No outgoing pending requests.</p>
+            {% endif %}
+        </div>
+
+        <!-- Tab 3: Suggestions -->
+        <div class="tab-pane fade" id="suggestions-conns" role="tabpanel">
+            {% if suggestions %}
+            <div class="row g-3">
+                {% for item in suggestions %}
+                {% set s = item.school %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <h5 class="card-title mb-1">
+                                <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                            </h5>
+                            <p class="text-muted small mb-2">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</p>
+                            <div class="mb-3">
+                                {% for reason in item.reasons %}
+                                <span class="badge bg-light text-dark border me-1 mb-1">{{ reason }}</span>
+                                {% endfor %}
+                            </div>
+                            <form method="post" action="{{ url_for('schools.connect_school', target_school_id=s.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-eh w-100">Connect &rarr;</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5 bg-light rounded-3">
+                <p class="text-muted mb-0">No suggestions available right now. Check back as more schools join!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

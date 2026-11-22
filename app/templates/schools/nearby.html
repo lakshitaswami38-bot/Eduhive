@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Nearby Schools - EduHive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #nearbyMap {
+        height: 420px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h2 mb-1">Nearby Schools</h1>
+            <p class="text-muted mb-0">Discover verified schools around your location or pincode.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('schools.listing') }}" class="btn btn-eh-outline">&larr; All Schools</a>
+        </div>
+    </div>
+
+    <!-- Search / Filter Form -->
+    <div class="card p-3 mb-4 shadow-sm border-0">
+        <form method="get" action="{{ url_for('schools.nearby') }}" id="nearbyForm" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="q" id="qInput" class="form-control" placeholder="Enter 6-digit pincode or city name..." value="{{ q }}">
+            </div>
+            <div class="col-md-3">
+                <div class="input-group">
+                    <label class="input-group-text" for="radiusSelect">Radius</label>
+                    <select name="radius" id="radiusSelect" class="form-select">
+                        <option value="2" {% if radius == 2 %}selected{% endif %}>2 km</option>
+                        <option value="5" {% if radius == 5 %}selected{% endif %}>5 km</option>
+                        <option value="10" {% if radius == 10 %}selected{% endif %}>10 km</option>
+                        <option value="20" {% if radius == 20 %}selected{% endif %}>20 km</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" name="lat" id="latInput">
+            <input type="hidden" name="lng" id="lngInput">
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-eh flex-grow-1">Search Area</button>
+                <button type="button" class="btn btn-eh-dark" id="btnGeolocate" title="Use current browser location">
+                    &target; Use My Location
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Map & Results -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div id="nearbyMap"></div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0">
+                        Schools within {{ radius }} km
+                        <span class="badge bg-eh text-dark ms-2">{{ results|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0" style="max-height: 360px; overflow-y: auto;">
+                    {% if results %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in results %}
+                        {% set s = item.school %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-3">
+                            <div>
+                                <h6 class="mb-1">
+                                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="text-decoration-none text-dark">{{ s.name }}</a>
+                                </h6>
+                                <p class="text-muted small mb-0">{{ s.city }} &bull; {{ s.board }}</p>
+                                {% if s.fee_min %}
+                                <small class="text-muted">Fee: &#8377;{{ "{:,}".format(s.fee_min) }}/yr</small>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                {% if item.distance is not none %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle mb-1">{{ item.distance }} km</span>
+                                {% endif %}
+                                <div>
+                                    <a href="{{ url_for('schools.public', school_id=s.id) }}" class="btn btn-sm btn-eh-outline">View &rarr;</a>
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <p class="mb-1">No schools found within {{ radius }} km.</p>
+                        <small>Try selecting a larger radius (up to 20 km) or searching another pincode.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schools without coordinates -->
+    {% if without_coords %}
+    <div class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0 text-muted h6">Other Verified Schools (Location pin pending)</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                {% for s in without_coords %}
+                <div class="col-md-4">
+                    <div class="p-2 border rounded">
+                        <a href="{{ url_for('schools.public', school_id=s.id) }}" class="fw-semibold text-decoration-none text-dark d-block text-truncate">{{ s.name }}</a>
+                        <small class="text-muted">{{ s.city }}, {{ s.state }} &bull; {{ s.board }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    const centerLat = {{ center[0] if center else 22.7196 }};
+    const centerLng = {{ center[1] if center else 75.8577 }};
+    const radiusMeters = {{ radius * 1000 }};
+    const hasCenter = {{ 'true' if center else 'false' }};
+
+    const map = L.map('nearbyMap').setView([centerLat, centerLng], hasCenter ? 12 : 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    if (hasCenter) {
+        // Center marker
+        L.marker([centerLat, centerLng], {
+            title: "Search Center"
+        }).addTo(map).bindPopup("<strong>Search Center</strong><br>{{ q or 'Your Location' }}").openPopup();
+
+        // Radius circle
+        L.circle([centerLat, centerLng], {
+            color: '#F5A623',
+            fillColor: '#FFE3A3',
+            fillOpacity: 0.25,
+            radius: radiusMeters
+        }).addTo(map);
+    }
+
+    // School markers
+    const schoolsData = [
+        {% for item in results %}
+        {% set s = item.school %}
+        {% if s.latitude and s.longitude %}
+        {
+            name: {{ s.name|tojson }},
+            lat: {{ s.latitude }},
+            lng: {{ s.longitude }},
+            distance: {{ item.distance if item.distance is not none else 'null' }},
+            url: {{ url_for('schools.public', school_id=s.id)|tojson }},
+            city: {{ s.city|tojson }}
+        },
+        {% endif %}
+        {% endfor %}
+    ];
+
+    schoolsData.forEach(function(school) {
+        const marker = L.marker([school.lat, school.lng]).addTo(map);
+        let popup = `<strong>${school.name}</strong><br>${school.city}`;
+        if (school.distance !== null) {
+            popup += `<br><span class="badge bg-secondary">${school.distance} km</span>`;
+        }
+        popup += `<br><a href="${school.url}" class="btn btn-sm btn-link p-0 mt-1">View School &rarr;</a>`;
+        marker.bindPopup(popup);
+    });
+
+    // Browser geolocation handler
+    document.getElementById('btnGeolocate').addEventListener('click', function() {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        this.innerHTML = 'Locating...';
+        navigator.geolocation.getCurrentPosition(
+            function(pos) {
+                document.getElementById('latInput').value = pos.coords.latitude;
+                document.getElementById('lngInput').value = pos.coords.longitude;
+                document.getElementById('qInput').value = '';
+                document.getElementById('nearbyForm').submit();
+            },
+            function(err) {
+                alert('Could not retrieve your location. Please enter a pincode or city name.');
+                document.getElementById('btnGeolocate').innerHTML = '&target; Use My Location';
+            },
+            { timeout: 10000 }
+        );
+    });
+</script>
+{% endblock %}

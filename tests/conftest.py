@@ -20,8 +20,8 @@ def client(app):
     return app.test_client()
 
 
-def make_user(email, role="user", password="password123"):
-    user = User(name="Test", email=email, role=role)
+def make_user(email, role="user", password="password123", is_verified=True):
+    user = User(name="Test", email=email, role=role, is_verified=is_verified)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

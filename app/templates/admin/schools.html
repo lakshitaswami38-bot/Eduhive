@@ -3,26 +3,41 @@
 {% block title %}School applications - EduHive{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <h1>School applications</h1>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">School Management &amp; Approvals</h1>
+            <p class="text-muted mb-0">Verify registration documents and manage school platform statuses.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-eh-outline">Manage Users &rarr;</a>
+        </div>
+    </div>
 
-    <div class="eh-tabs">
-        {% for s in ["pending", "approved", "rejected"] %}
-        <a href="{{ url_for('admin.schools', status=s) }}" class="{{ 'active' if current == s }}">{{ s|capitalize }} ({{ counts[s] }})</a>
+    <div class="eh-tabs mb-4">
+        {% for s in ["pending", "approved", "rejected", "suspended"] %}
+        <a href="{{ url_for('admin.schools', status=s) }}" class="{{ 'active' if current == s }}">
+            {{ s|capitalize }} ({{ counts[s] }})
+        </a>
         {% endfor %}
         <a href="{{ url_for('admin.schools', status='all') }}" class="{{ 'active' if current == 'all' }}">All</a>
     </div>
 
     {% if schools %}
-    <div class="table-responsive">
-        <table class="table align-middle eh-table">
-            <thead>
+    <div class="table-responsive shadow-sm border rounded bg-white">
+        <table class="table align-middle eh-table mb-0">
+            <thead class="table-light">
                 <tr><th>School</th><th>UDISE+</th><th>City</th><th>Submitted</th><th>Status</th><th></th></tr>
             </thead>
             <tbody>
                 {% for s in schools %}
                 <tr>
-                    <td>{{ s.name }}</td>
+                    <td>
+                        <strong>{{ s.name }}</strong>
+                        {% if s.is_suspended %}
+                        <span class="badge bg-danger ms-1">Suspended</span>
+                        {% endif %}
+                    </td>
                     <td>{{ s.udise_code }}</td>
                     <td>{{ s.city }}</td>
                     <td>{{ s.submitted_at.strftime('%d %b %Y') if s.submitted_at }}</td>
@@ -34,7 +49,9 @@
         </table>
     </div>
     {% else %}
-    <p class="text-muted mt-4">No applications here.</p>
+    <div class="text-center py-5 bg-light rounded-3 text-muted">
+        <p class="mb-0">No school applications in this category.</p>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

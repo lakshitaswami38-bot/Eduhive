@@ -6,36 +6,109 @@
         {% if school.status != "approved" %}
         <div class="alert alert-warning">This school is not approved yet, so only you and admins can see this page.</div>
         {% endif %}
-        <h1>{{ school.name }}</h1>
-        <p class="text-muted">{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</p>
-                {% if school.status == "approved" %}
-        <p class="text-muted mb-2">{{ followers }} follower{{ "s" if followers != 1 }}</p>
-        {% if current_user.is_authenticated and current_user.role == "user" %}
-            {% if following %}
-            <form method="post" action="{{ url_for('follows.unfollow', school_id=school.id) }}" class="mb-3">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-eh-outline btn-sm" type="submit">Following (click to unfollow)</button>
-            </form>
+
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+            {% if school.logo %}
+            <img class="eh-school-logo" src="{{ url_for('schools.photo', photo_id=school.logo.id) }}" alt="{{ school.name }} logo">
             {% else %}
-            <form method="post" action="{{ url_for('follows.follow', school_id=school.id) }}" class="mb-3">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-eh btn-sm" type="submit">Follow this school</button>
-            </form>
+            <div class="eh-school-logo eh-school-logo-empty" aria-hidden="true">{{ school.name[:1] }}</div>
             {% endif %}
-        {% elif not current_user.is_authenticated %}
-        <a class="btn btn-eh btn-sm mb-3" href="{{ url_for('auth.login', next=request.path) }}">Log in to follow</a>
+            <div class="flex-grow-1">
+                <h1 class="mb-1">{{ school.name }}</h1>
+                <p class="text-muted mb-1">{{ school.address }}, {{ school.city }}, {{ school.state }} - {{ school.pincode }}</p>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="eh-status eh-status-{{ school.status }}">{{ "Verified School" if school.status == "approved" else school.status|capitalize }}</span>
+                    <span class="badge bg-secondary">{{ school.board }}</span>
+                    <span class="text-muted">Est. {{ school.established_year }} ({{ school.years_running }} yrs)</span>
+                </div>
+            </div>
+        </div>
+
+        {% if school.status == "approved" %}
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 p-3 bg-light rounded mb-4">
+            <div>
+                <strong>Admissions:</strong>
+                {% if school.admission_open %}
+                <span class="badge bg-success ms-1">Open</span>
+                {% if school.admission_deadline %}
+                <span class="text-muted small ms-2">Deadline: {{ school.admission_deadline.strftime('%d %b %Y') }}</span>
+                {% endif %}
+                {% else %}
+                <span class="badge bg-secondary ms-1">Closed</span>
+                {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if school.admission_open and school.admission_url %}
+                <a class="btn btn-eh btn-sm" href="{{ school.admission_url }}" target="_blank" rel="noopener nofollow">Apply for Admission &rarr;</a>
+                {% endif %}
+
+                {% if current_user.is_authenticated and current_user.role == "user" %}
+                    <form method="post" action="{{ url_for('matches.toggle_shortlist', school_id=school.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm {% if is_shortlisted %}btn-warning text-dark{% else %}btn-eh-outline{% endif %}" type="submit">
+                            {{ "★ Shortlisted" if is_shortlisted else "☆ Shortlist" }}
+                        </button>
+                    </form>
+                    {% if following %}
+                    <form method="post" action="{{ url_for('follows.unfollow', school_id=school.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-eh-outline btn-sm" type="submit">Following ({{ followers }})</button>
+                    </form>
+                    {% else %}
+                    <form method="post" action="{{ url_for('follows.follow', school_id=school.id) }}" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-eh btn-sm" type="submit">Follow ({{ followers }})</button>
+                    </form>
+                    {% endif %}
+                {% elif not current_user.is_authenticated %}
+                <a class="btn btn-eh btn-sm" href="{{ url_for('auth.login', next=request.path) }}">Log in to follow ({{ followers }})</a>
+                {% else %}
+                <span class="text-muted small">{{ followers }} follower{{ "s" if followers != 1 }}</span>
+                {% endif %}
+            </div>
+        </div>
         {% endif %}
+
+        {% if school.status == "approved" %}
+        <div class="card p-3 mb-4 shadow-sm border-0">
+            <h3 class="h6 mb-2">Have an admission question for {{ school.name }}?</h3>
+            {% if current_user.is_authenticated and current_user.role == "user" %}
+            <form method="post" action="{{ url_for('schools.inquire', school_id=school.id) }}">
+                {{ inquiry_form.hidden_tag() }}
+                <div class="row g-2 align-items-center mb-2">
+                    <div class="col-sm-4">
+                        <label class="form-label small mb-1" for="child_class">Class applying for</label>
+                        {{ inquiry_form.child_class(class="form-control form-control-sm", type="number", min="1", max="12", placeholder="e.g. 6") }}
+                    </div>
+                    <div class="col-sm-8">
+                        <label class="form-label small mb-1" for="message">Your query / message</label>
+                        {{ inquiry_form.message(class="form-control form-control-sm", rows="2", placeholder="Ask about admissions, fees, transport...") }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-eh">Submit Admission Inquiry &rarr;</button>
+            </form>
+            {% elif not current_user.is_authenticated %}
+            <p class="text-muted small mb-0"><a href="{{ url_for('auth.login', next=request.path) }}">Log in</a> as a parent or student to send an admission inquiry directly to the school administration.</p>
+            {% else %}
+            <p class="text-muted small mb-0">Admission inquiries can be submitted by prospective parents and students.</p>
+            {% endif %}
+        </div>
         {% endif %}
 
         {% if current_user.is_authenticated and current_user.id == school.owner_id and school.status == "approved" %}
-        <a class="btn btn-eh-dark btn-sm mb-3" href="{{ url_for('schools.profile') }}">Edit profile</a>
+        <div class="mb-4">
+            <a class="btn btn-eh-dark btn-sm" href="{{ url_for('schools.profile') }}">Edit profile</a>
+        </div>
         {% endif %}
 
         {% if school.about %}
-        <p>{{ school.about }}</p>
+        <div class="mb-4">
+            <h2 class="eh-form-h">About</h2>
+            <p class="eh-about">{{ school.about }}</p>
+        </div>
 
         <h2 class="eh-form-h">At a glance</h2>
-        <dl class="eh-dl">
+        <dl class="eh-dl mb-4">
             <dt>Board</dt><dd>{{ school.board }}</dd>
             <dt>Medium</dt><dd>{{ school.medium }}</dd>
             <dt>Classes</dt><dd>{{ school.class_from }} to {{ school.class_to }}</dd>
@@ -48,12 +121,99 @@
 
         {% if facilities %}
         <h2 class="eh-form-h">Facilities</h2>
-        <p>{{ facilities|join(", ") }}</p>
+        <ul class="eh-chips mb-4">
+            {% for f in facilities %}
+            <li>{{ f }}</li>
+            {% endfor %}
+        </ul>
         {% endif %}
+
+        {% if specialities %}
+        <h2 class="eh-form-h">Specialities</h2>
+        <ul class="eh-chips eh-chips-accent mb-4">
+            {% for s in specialities %}
+            <li>{{ s }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if results %}
+        <h2 class="eh-form-h">Board exam results</h2>
+        <div class="table-responsive mb-2">
+            <table class="table eh-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Class 10 pass %</th>
+                        <th>Class 12 pass %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td><strong>{{ r.year }}</strong></td>
+                        <td>{% if r.class10_pass is not none %}{{ '%.1f'|format(r.class10_pass|float) }}%{% else %}&mdash;{% endif %}</td>
+                        <td>{% if r.class12_pass is not none %}{{ '%.1f'|format(r.class12_pass|float) }}%{% else %}&mdash;{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted small mb-4">Reported by the school, not verified</p>
+        {% endif %}
+
+        {% if school.gallery %}
+        <h2 class="eh-form-h">Photos</h2>
+        <div class="eh-gallery mb-4">
+            {% for p in school.gallery %}
+            <img src="{{ url_for('schools.photo', photo_id=p.id) }}" alt="Photo of {{ school.name }}" loading="lazy">
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if school.status == "approved" %}
+        <div class="card p-3 mb-4 shadow-sm border-0">
+            <h3 class="h6 mb-2">Have an admission question for {{ school.name }}?</h3>
+            {% if current_user.is_authenticated and current_user.role == "user" %}
+            <form method="post" action="{{ url_for('schools.inquire', school_id=school.id) }}">
+                {{ inquiry_form.hidden_tag() }}
+                <div class="row g-2 align-items-center mb-2">
+                    <div class="col-sm-4">
+                        <label class="form-label small mb-1" for="child_class">Class applying for</label>
+                        {{ inquiry_form.child_class(class="form-control form-control-sm", type="number", min="1", max="12", placeholder="e.g. 6") }}
+                    </div>
+                    <div class="col-sm-8">
+                        <label class="form-label small mb-1" for="message">Your query / message</label>
+                        {{ inquiry_form.message(class="form-control form-control-sm", rows="2", placeholder="Ask about admissions, fees, transport...") }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sm btn-eh">Submit Admission Inquiry &rarr;</button>
+            </form>
+            {% elif not current_user.is_authenticated %}
+            <p class="text-muted small mb-0"><a href="{{ url_for('auth.login', next=request.path) }}">Log in</a> as a parent or student to send an admission inquiry directly to the school administration.</p>
+            {% else %}
+            <p class="text-muted small mb-0">Admission inquiries can be submitted by prospective parents and students.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if school.latitude is not none and school.longitude is not none %}
+        <h2 class="eh-form-h">Location</h2>
+        <div id="school-map" class="eh-map mb-2" data-lat="{{ school.latitude }}" data-lng="{{ school.longitude }}"></div>
+        {% if school.location_source == "pincode" %}
+        <p class="text-muted small mb-4">Approximate location based on pincode.</p>
+        {% elif school.location_source == "manual" %}
+        <p class="text-muted small mb-4">Exact location pinned by the school.</p>
+        {% else %}
+        <p class="text-muted small mb-4">Location matched from school address.</p>
+        {% endif %}
+        {% endif %}
+
         {% else %}
         <p class="text-muted">This school has not filled its profile yet.</p>
         {% endif %}
-                {% set is_owner = current_user.is_authenticated and current_user.id == school.owner_id %}
+
+        {% set is_owner = current_user.is_authenticated and current_user.id == school.owner_id %}
         {% if school.status == "approved" %}
 
         <h2 class="eh-form-h">Upcoming events</h2>
@@ -61,7 +221,7 @@
         {% for e in events %}
         <div class="eh-item">
             <a href="{{ url_for('content.event_detail', event_id=e.id) }}"><strong>{{ e.title }}</strong></a>
-            <div class="text-muted">{{ e.starts_at.strftime('%d %b %Y, %I:%M %p') }} · {{ e.venue }}</div>
+            <div class="text-muted">{{ e.starts_at.strftime('%d %b %Y, %I:%M %p') }} &middot; {{ e.venue }}</div>
             {% if is_owner %}
             <form method="post" action="{{ url_for('content.delete_event', event_id=e.id) }}" class="mt-1">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -76,16 +236,33 @@
         <h2 class="eh-form-h">Latest posts</h2>
         {% if is_owner %}<a class="btn btn-eh btn-sm mb-3" href="{{ url_for('content.new_post') }}">+ New post</a>{% endif %}
         {% for p in posts %}
-        <div class="eh-item">
+        <div class="eh-item border rounded p-3 mb-3 bg-white">
             <strong>{{ p.title }}</strong>
-            <div class="text-muted small">{{ p.created_at.strftime('%d %b %Y') }}</div>
-            <p class="eh-pre mb-1">{{ p.body }}</p>
-            {% if is_owner %}
-            <form method="post" action="{{ url_for('content.delete_post', post_id=p.id) }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="btn btn-eh-outline btn-sm" type="submit">Delete</button>
-            </form>
+            <div class="text-muted small mb-2">{{ p.created_at.strftime('%d %b %Y') }}</div>
+            {% if p.photo_name %}
+            <div class="mb-2">
+                <img src="{{ url_for('content.post_photo', post_id=p.id) }}" alt="{{ p.title }}" class="img-fluid rounded" style="max-height: 400px; object-fit: cover;">
+            </div>
             {% endif %}
+            <p class="eh-pre mb-2">{{ p.body }}</p>
+            <div class="d-flex align-items-center gap-2">
+                {% if current_user.is_authenticated and current_user.role != "admin" %}
+                <form method="post" action="{{ url_for('content.toggle_like', post_id=p.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-secondary" type="submit">
+                        &hearts; {{ p.likes|length }}
+                    </button>
+                </form>
+                {% else %}
+                <span class="text-muted small">&hearts; {{ p.likes|length }} like{{ 's' if p.likes|length != 1 }}</span>
+                {% endif %}
+                {% if is_owner %}
+                <form method="post" action="{{ url_for('content.delete_post', post_id=p.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-eh-outline btn-sm text-danger" type="submit">Delete</button>
+                </form>
+                {% endif %}
+            </div>
         </div>
         {% else %}
         <p class="text-muted">No posts yet.</p>
@@ -93,4 +270,25 @@
         {% endif %}
     </div>
 </div>
+
+{% if school.latitude is not none and school.longitude is not none %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var el = document.getElementById("school-map");
+    if (!el || typeof L === "undefined") { return; }
+    var lat = parseFloat(el.dataset.lat);
+    var lng = parseFloat(el.dataset.lng);
+    if (isNaN(lat) || isNaN(lng)) { return; }
+    var point = [lat, lng];
+    var map = L.map(el).setView(point, 15);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+    L.marker(point).addTo(map).bindPopup("<b>{{ school.name|e }}</b><br>{{ school.address|e }}").openPopup();
+})();
+</script>
+{% endif %}
 {% endblock %}

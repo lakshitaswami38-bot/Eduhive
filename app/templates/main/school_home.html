@@ -1,13 +1,20 @@
 {% extends "base.html" %}
-{% block title %}{{ school.name }} - EduHive{% endblock %}
+{% block title %}{{ school.name if school else 'School Dashboard' }} - EduHive{% endblock %}
 {% block content %}
 <div class="container py-5">
+    {% if school %}
     <h1>Welcome, {{ school.name }}</h1>
     <p class="text-muted">Your school is verified. Keep your profile up to date so families can find you.</p>
     <div class="d-flex flex-wrap gap-2">
         <a class="btn btn-eh" href="{{ url_for('schools.profile') }}">Edit school profile</a>
         <a class="btn btn-eh-dark" href="{{ url_for('schools.public', school_id=school.id) }}">View public page</a>
+        <a class="btn btn-eh-outline" href="{{ url_for('schools.inquiries') }}">Admission Inquiries</a>
+        <a class="btn btn-eh-outline" href="{{ url_for('schools.connections') }}">School Connections</a>
         <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.status') }}">Application details</a>
     </div>
+    {% else %}
+    <h1>School Registration</h1>
+    <p class="text-muted">Please verify your email address to begin registering your school.</p>
+    {% endif %}
 </div>
 {% endblock %}

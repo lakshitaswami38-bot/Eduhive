@@ -4,11 +4,62 @@
 {% block content %}
 <div class="container py-5">
     <div class="eh-form-wide">
-        <h1>Your school profile</h1>
-        <p class="text-muted">This is what students and parents will see.</p>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h1>Your school profile</h1>
+                <p class="text-muted mb-0">This is what students and parents will see on EduHive.</p>
+            </div>
+            <a class="btn btn-eh-dark" href="{{ url_for('schools.public', school_id=school.id) }}">View public page</a>
+        </div>
+
+        <h2 class="eh-form-h">Logo and photos</h2>
+        <p class="text-muted">Upload JPG or PNG photos (up to 5 MB each). Photos are processed to remove GPS metadata.</p>
+        <div class="row g-4 mb-4">
+            <div class="col-md-5">
+                <form method="post" action="{{ url_for('schools.upload_logo') }}" enctype="multipart/form-data" class="p-3 border rounded bg-white">
+                    {{ logo_form.hidden_tag() }}
+                    <label class="form-label fw-bold" for="logo">School logo</label>
+                    {% if school.logo %}
+                    <img class="eh-logo-preview" src="{{ url_for('schools.photo', photo_id=school.logo.id) }}" alt="Current logo">
+                    {% else %}
+                    <div class="eh-logo-preview d-flex align-items-center justify-content-center bg-light text-muted fw-bold">No logo</div>
+                    {% endif %}
+                    {{ logo_form.logo(class="form-control mb-2", accept="image/png,image/jpeg") }}
+                    {{ logo_form.submit(class="btn btn-eh-dark btn-sm") }}
+                </form>
+            </div>
+            <div class="col-md-7">
+                <form method="post" action="{{ url_for('schools.upload_gallery') }}" enctype="multipart/form-data" class="p-3 border rounded bg-white">
+                    {{ gallery_form.hidden_tag() }}
+                    <label class="form-label fw-bold" for="photos">Gallery photos ({{ school.gallery|length }} of {{ max_gallery }} used)</label>
+                    <p class="text-muted small mb-2">You can select multiple photos at once.</p>
+                    {{ gallery_form.photos(class="form-control mb-2", multiple=True, accept="image/png,image/jpeg") }}
+                    {{ gallery_form.submit(class="btn btn-eh-dark btn-sm") }}
+                </form>
+            </div>
+        </div>
+
+        {% if school.gallery %}
+        <div class="eh-gallery eh-gallery-manage mb-5">
+            {% for p in school.gallery %}
+            <figure class="border rounded p-2 bg-white">
+                <img src="{{ url_for('schools.photo', photo_id=p.id) }}" alt="Gallery photo" loading="lazy" class="img-fluid rounded mb-2">
+                <form method="post" action="{{ url_for('schools.delete_photo', photo_id=p.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-eh-outline-dark w-100">Remove</button>
+                </form>
+            </figure>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <form method="post" novalidate>
             {{ form.hidden_tag() }}
-            {{ field(form.about, rows="5", hint="At least 30 characters") }}
+
+            <h2 class="eh-form-h">About the school</h2>
+            {{ field(form.about, rows="5", hint="Describe your school's vision, history and strengths (minimum 30 characters).") }}
+
+            <h2 class="eh-form-h">School at a glance</h2>
             <div class="row">
                 <div class="col-md-6">{{ field(form.medium) }}</div>
                 <div class="col-md-6">{{ field(form.website, placeholder="https://") }}</div>
@@ -21,9 +72,9 @@
             </div>
 
             <h2 class="eh-form-h">Facilities</h2>
-            <div class="row mb-3">
+            <div class="row mb-4">
                 {% for value, label in form.facilities.choices %}
-                <div class="col-sm-6 col-md-4">
+                <div class="col-sm-6 col-md-4 mb-2">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="facilities" value="{{ value }}"
                             id="fac_{{ value }}" {{ "checked" if value in (form.facilities.data or []) }}>
@@ -33,8 +84,124 @@
                 {% endfor %}
             </div>
 
-            {{ form.submit(class="btn btn-eh") }}
+            <h2 class="eh-form-h">Specialities</h2>
+            <p class="text-muted">What is your school recognized for? This helps recommend your school to relevant students.</p>
+            <div class="row mb-4">
+                {% for value, label in form.specialities.choices %}
+                <div class="col-sm-6 col-md-4 mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="specialities" value="{{ value }}"
+                            id="spec_{{ value }}" {{ "checked" if value in (form.specialities.data or []) }}>
+                        <label class="form-check-label" for="spec_{{ value }}">{{ label }}</label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h2 class="eh-form-h">Board exam results</h2>
+            <p class="text-muted">Recent years pass percentages. Leave a row empty if you do not have data for that year.</p>
+            <div class="table-responsive mb-4">
+                <table class="table eh-table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">Year</th>
+                            <th style="width: 37.5%;">Class 10 pass %</th>
+                            <th style="width: 37.5%;">Class 12 pass %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in form.results %}
+                        <tr>
+                            <td>
+                                {{ row.year(class="form-control" ~ (" is-invalid" if row.year.errors else ""), inputmode="numeric", placeholder="YYYY") }}
+                                {% for error in row.year.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </td>
+                            <td>
+                                {{ row.class10(class="form-control" ~ (" is-invalid" if row.class10.errors else ""), inputmode="decimal", placeholder="e.g. 96.5", step="0.1") }}
+                                {% for error in row.class10.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </td>
+                            <td>
+                                {{ row.class12(class="form-control" ~ (" is-invalid" if row.class12.errors else ""), inputmode="decimal", placeholder="e.g. 94.2", step="0.1") }}
+                                {% for error in row.class12.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="eh-form-h">Admissions</h2>
+            <div class="form-check mb-3">
+                {{ form.admission_open(class="form-check-input", id="admission_open") }}
+                <label class="form-check-label fw-bold" for="admission_open">Admissions are currently open</label>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-5">{{ field(form.admission_deadline) }}</div>
+                <div class="col-md-7">{{ field(form.admission_url, placeholder="https://yourschool.edu/admissions", hint="Link to online application form (http:// or https:// only)") }}</div>
+            </div>
+
+            <h2 class="eh-form-h">Location</h2>
+            <p class="text-muted">
+                {% if school.latitude is not none and school.longitude is not none %}
+                    {% if school.location_source == "manual" %}You placed this pin manually.
+                    {% elif school.location_source == "pincode" %}Approximate location from your pincode.
+                    {% else %}Found from your school address.{% endif %}
+                    Click or drag the pin to correct it.
+                {% else %}
+                    We will automatically detect your location from your address when you save. You can also click the map to set a pin.
+                {% endif %}
+            </p>
+            <div id="map" class="eh-map mb-3"
+                 data-lat="{{ school.latitude if school.latitude is not none else '' }}"
+                 data-lng="{{ school.longitude if school.longitude is not none else '' }}"></div>
+            <div class="row">
+                <div class="col-md-6">{{ field(form.latitude, inputmode="decimal") }}</div>
+                <div class="col-md-6">{{ field(form.longitude, inputmode="decimal") }}</div>
+            </div>
+            <div class="form-check mb-4">
+                {{ form.redetect(class="form-check-input", id="redetect") }}
+                <label class="form-check-label" for="redetect">Detect the location again from my address</label>
+            </div>
+
+            {{ form.submit(class="btn btn-eh px-4 py-2") }}
         </form>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    var el = document.getElementById("map");
+    if (!el || typeof L === "undefined") { return; }
+    var latInput = document.getElementById("latitude");
+    var lngInput = document.getElementById("longitude");
+    var hasPin = el.dataset.lat !== "" && el.dataset.lng !== "";
+    var start = hasPin ? [parseFloat(el.dataset.lat), parseFloat(el.dataset.lng)] : [22.9734, 78.6569];
+    var map = L.map(el).setView(start, hasPin ? 15 : 5);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors"
+    }).addTo(map);
+
+    var marker = null;
+    function write(point) {
+        if (latInput && lngInput) {
+            latInput.value = point.lat.toFixed(6);
+            lngInput.value = point.lng.toFixed(6);
+        }
+    }
+    function place(point) {
+        if (marker) {
+            marker.setLatLng(point);
+        } else {
+            marker = L.marker(point, { draggable: true }).addTo(map);
+            marker.on("dragend", function () { write(marker.getLatLng()); });
+        }
+        write(point);
+    }
+    if (hasPin) { place(L.latLng(start[0], start[1])); }
+    map.on("click", function (event) { place(event.latlng); });
+})();
+</script>
 {% endblock %}

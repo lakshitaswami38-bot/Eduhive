@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Compare Schools - EduHive{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Side-by-Side School Comparison</h1>
+            <p class="text-muted mb-0">Transparent, factual comparison across verified school profiles.</p>
+        </div>
+        <div>
+            {% if current_user.is_authenticated and current_user.role == 'user' %}
+            <a href="{{ url_for('matches.shortlist') }}" class="btn btn-eh-outline">&larr; Back to Shortlist</a>
+            {% else %}
+            <a href="{{ url_for('schools.listing') }}" class="btn btn-eh-outline">&larr; Back to Schools</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="table-responsive shadow-sm rounded border bg-white mb-4">
+        <table class="table table-bordered align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 22%;">Attribute</th>
+                    {% for s in schools %}
+                    <th class="text-center" style="width: {{ (78 / schools|length)|round(1) }}%;">
+                        <div class="py-2">
+                            {% if s.logo_photo %}
+                            <img src="{{ url_for('schools.photo', filename=s.logo_photo.filename) }}" alt="{{ s.name }}" class="rounded-circle mb-2" style="width: 56px; height: 56px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-light text-secondary d-inline-flex align-items-center justify-content-center mb-2 fw-bold" style="width: 56px; height: 56px; font-size: 1.25rem;">
+                                {{ s.name[:1] }}
+                            </div>
+                            {% endif %}
+                            <h5 class="h6 mb-1">{{ s.name }}</h5>
+                            <a href="{{ url_for('schools.public', school_id=s.id) }}" class="btn btn-sm btn-eh-outline">View Profile</a>
+                        </div>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th class="bg-light">Affiliated Board</th>
+                    {% for s in schools %}
+                    <td class="text-center fw-semibold">{{ s.board }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Location</th>
+                    {% for s in schools %}
+                    <td class="text-center">{{ s.city }}, {{ s.state }}<br><small class="text-muted">{{ s.pincode }}</small></td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Established Year</th>
+                    {% for s in schools %}
+                    <td class="text-center">{{ s.established_year or 'Not provided' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Medium of Instruction</th>
+                    {% for s in schools %}
+                    <td class="text-center">{{ s.medium or 'Not provided' }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Yearly Fee Range</th>
+                    {% for s in schools %}
+                    <td class="text-center">
+                        {% if s.fee_min %}
+                        <span class="fw-bold text-dark">&#8377;{{ "{:,}".format(s.fee_min) }}</span>
+                        {% if s.fee_max %} - &#8377;{{ "{:,}".format(s.fee_max) }}{% endif %}
+                        {% else %}
+                        <span class="text-muted">Not provided</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Classes Offered</th>
+                    {% for s in schools %}
+                    <td class="text-center">
+                        {% if s.class_from %}
+                        Class {{ s.class_from }} to {{ s.class_to }}
+                        {% else %}
+                        <span class="text-muted">Not provided</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Students &amp; Faculty</th>
+                    {% for s in schools %}
+                    <td class="text-center">
+                        {% if s.student_count and s.teacher_count %}
+                        {{ s.student_count }} students &bull; {{ s.teacher_count }} teachers<br>
+                        <small class="badge bg-light text-dark border mt-1">Ratio: {{ (s.student_count / s.teacher_count)|round(1) }}:1</small>
+                        {% else %}
+                        <span class="text-muted">Not provided</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Admissions Status</th>
+                    {% for s in schools %}
+                    <td class="text-center">
+                        {% if s.admission_open %}
+                        <span class="badge bg-success mb-1">Open</span>
+                        {% if s.admission_deadline %}
+                        <div class="small text-muted">Deadline: {{ s.admission_deadline.strftime('%d %b %Y') }}</div>
+                        {% endif %}
+                        {% if s.admission_url %}
+                        <a href="{{ s.admission_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-link p-0 d-block mt-1">Apply Online &rarr;</a>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-secondary">Closed</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Board Exam Results<br><small class="text-muted fw-normal">Reported by school, not verified</small></th>
+                    {% for s in schools %}
+                    <td class="text-center">
+                        {% if s.results %}
+                        {% set latest = s.results|sort(attribute='year', reverse=True)|first %}
+                        <div class="fw-bold">{{ latest.pass_percentage }}% pass rate</div>
+                        <small class="text-muted">Class {{ latest.class_level }} ({{ latest.year }})</small>
+                        {% else %}
+                        <span class="text-muted">Not provided</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Specialities / Focus</th>
+                    {% for s in schools %}
+                    <td>
+                        {% if s.specialities %}
+                        <div class="d-flex flex-wrap gap-1 justify-content-center">
+                            {% for spec in s.specialities %}
+                            <span class="badge bg-light text-dark border">{{ spec_labels.get(spec, spec) }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted">None specified</div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th class="bg-light">Campus Facilities</th>
+                    {% for s in schools %}
+                    <td>
+                        {% if s.facility_list %}
+                        <div class="d-flex flex-wrap gap-1 justify-content-center">
+                            {% for fac in s.facility_list %}
+                            <span class="badge bg-light text-secondary border">&check; {{ fac_labels.get(fac, fac) }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center text-muted">None specified</div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

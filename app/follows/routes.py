@@ -1,13 +1,13 @@
 from datetime import datetime
 
-from flask import abort, flash, redirect, render_template, url_for
+from flask import abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy.exc import IntegrityError
 
 from app import db
 from app.decorators import role_required
 from app.follows import bp
-from app.models import Event, Follow, Post, School
+from app.models import Connection, Event, Follow, Post, School
 
 
 def _find(school_id):
@@ -46,13 +46,36 @@ def unfollow(school_id):
 
 
 @bp.route("/feed")
-@role_required("user")
+@role_required("user", "school")
 def feed():
-    follows = db.session.scalars(
-        db.select(Follow).filter_by(user_id=current_user.id).order_by(Follow.created_at.desc())
-    ).all()
-    schools = [f.school for f in follows if f.school.status == "approved"]
-    ids = [s.id for s in schools]
+    tab = request.args.get("tab", "following")
+    schools = []
+    ids = []
+
+    if tab == "network" and current_user.role == "school" and current_user.school:
+        my_school = current_user.school
+        conns = db.session.scalars(
+            db.select(Connection).filter(
+                db.or_(Connection.school_low_id == my_school.id, Connection.school_high_id == my_school.id),
+                Connection.status == "accepted",
+            )
+        ).all()
+        connected_ids = [
+            c.receiver_school_id if c.requester_school_id == my_school.id else c.requester_school_id
+            for c in conns
+        ]
+        if connected_ids:
+            schools = db.session.scalars(
+                db.select(School).filter(School.id.in_(connected_ids), School.status == "approved")
+            ).all()
+            ids = [s.id for s in schools]
+    else:
+        tab = "following"
+        follows = db.session.scalars(
+            db.select(Follow).filter_by(user_id=current_user.id).order_by(Follow.created_at.desc())
+        ).all()
+        schools = [f.school for f in follows if f.school.status == "approved"]
+        ids = [s.id for s in schools]
 
     items = []
     if ids:
@@ -69,4 +92,4 @@ def feed():
         items += [{"kind": "event", "obj": e, "when": e.created_at} for e in events]
         items.sort(key=lambda i: i["when"], reverse=True)
 
-    return render_template("follows/feed.html", items=items, schools=schools)
+    return render_template("follows/feed.html", items=items, schools=schools, tab=tab)

@@ -4,14 +4,27 @@
 {% block title %}{{ school.name }} - EduHive{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="eh-form-wide">
         <a href="{{ url_for('admin.schools') }}">&larr; All applications</a>
-        <h1 class="mt-2">{{ school.name }}</h1>
-        <p><span class="eh-status eh-status-{{ school.status }}">{{ school.status|capitalize }}</span></p>
+        <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+            <h1 class="h2 mb-0">{{ school.name }}</h1>
+            <div>
+                <span class="eh-status eh-status-{{ school.status }}">{{ school.status|capitalize }}</span>
+                {% if school.is_suspended %}
+                <span class="badge bg-danger ms-1">Suspended</span>
+                {% endif %}
+            </div>
+        </div>
 
         {% if school.status == "rejected" %}
         <div class="alert alert-warning"><strong>Rejection reason:</strong> {{ school.rejection_reason }}</div>
+        {% endif %}
+
+        {% if school.is_suspended %}
+        <div class="alert alert-danger">
+            <strong>School Suspended:</strong> This school is currently hidden from public search, directories, and recommendations.
+        </div>
         {% endif %}
 
         <h2 class="eh-form-h">Details</h2>
@@ -50,6 +63,19 @@
             {{ field(form.reason, rows="4") }}
             {{ form.submit(class="btn btn-eh-dark") }}
         </form>
+        {% elif school.status == "approved" %}
+        <h2 class="eh-form-h">Administrative Moderation</h2>
+        {% if school.is_suspended %}
+        <form method="post" action="{{ url_for('admin.reinstate', school_id=school.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-success">Reinstate School to Public Platform</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('admin.suspend', school_id=school.id) }}" onsubmit="return confirm('Suspend this school? It will immediately disappear from public directories and ranking.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger">Suspend School</button>
+        </form>
+        {% endif %}
         {% endif %}
     </div>
 </div>

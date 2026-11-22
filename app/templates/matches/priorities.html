@@ -1,13 +1,18 @@
 {% extends "base.html" %}
 {% from "_formhelpers.html" import field %}
-{% block title %}My priorities - EduHive{% endblock %}
+{% block title %}My Priorities - EduHive{% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="eh-form-wide">
-        <h1>What matters to you?</h1>
-        <p class="text-muted">Fill only what you care about. Empty fields are ignored. Then say how important each one is.</p>
-        <form method="post" novalidate>
+        <h1 class="h2 mb-1">What matters to you?</h1>
+        <p class="text-muted mb-4">
+            Fill only what you care about. Empty criteria are ignored. Our explainable rule-based weighted algorithm ranks schools according to your priorities.
+        </p>
+        <form method="post" novalidate id="priorityForm">
             {{ form.hidden_tag() }}
+
+            <h2 class="h5 eh-form-h">1. Budget &amp; Board</h2>
             <div class="row">
                 <div class="col-md-8">{{ field(form.max_fee, inputmode="numeric") }}</div>
                 <div class="col-md-4">{{ field(form.w_fee) }}</div>
@@ -15,11 +20,29 @@
                 <div class="col-md-4">{{ field(form.w_board) }}</div>
                 <div class="col-md-8">{{ field(form.city) }}</div>
                 <div class="col-md-4">{{ field(form.w_city) }}</div>
-                <div class="col-md-8">{{ field(form.class_needed, inputmode="numeric", hint="Schools that do not teach this class are hidden") }}</div>
+                <div class="col-md-12">{{ field(form.class_needed, inputmode="numeric", hint="Schools that do not teach this class are filtered out") }}</div>
             </div>
 
-            <h2 class="eh-form-h">Facilities</h2>
+            <h2 class="h5 eh-form-h mt-3">2. Distance &amp; Location</h2>
+            <div class="row">
+                <div class="col-md-5">{{ field(form.pincode, placeholder="e.g. 452010") }}</div>
+                <div class="col-md-3">
+                    <label class="form-label d-block">&nbsp;</label>
+                    <button type="button" class="btn btn-eh-outline w-100" id="btnDetectLocation">&target; Detect GPS</button>
+                </div>
+                <div class="col-md-4">{{ field(form.max_distance, placeholder="e.g. 15") }}</div>
+                <div class="col-md-12"><small class="text-muted d-block mb-2" id="gpsStatus"></small></div>
+                <div class="col-md-4">{{ field(form.w_distance) }}</div>
+            </div>
+
+            <h2 class="h5 eh-form-h mt-3">3. Board Examination Results</h2>
+            <p class="small text-muted mb-2">Weight schools based on their latest reported 10th/12th board pass rate average.</p>
             <div class="row mb-3">
+                <div class="col-md-4">{{ field(form.w_results) }}</div>
+            </div>
+
+            <h2 class="h5 eh-form-h mt-3">4. Facilities</h2>
+            <div class="row mb-2">
                 {% for value, label in form.facilities.choices %}
                 <div class="col-sm-6 col-md-4">
                     <div class="form-check">
@@ -30,10 +53,54 @@
                 </div>
                 {% endfor %}
             </div>
-            <div class="row"><div class="col-md-4">{{ field(form.w_facilities) }}</div></div>
+            <div class="row mb-3"><div class="col-md-4">{{ field(form.w_facilities) }}</div></div>
+
+            <h2 class="h5 eh-form-h mt-3">5. Focus Areas / Specialities</h2>
+            <div class="row mb-2">
+                {% for value, label in form.specialities.choices %}
+                <div class="col-sm-6 col-md-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="specialities" value="{{ value }}"
+                            id="spec_{{ value }}" {{ "checked" if value in (form.specialities.data or []) }}>
+                        <label class="form-check-label" for="spec_{{ value }}">{{ label }}</label>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="row mb-3"><div class="col-md-4">{{ field(form.w_specialities) }}</div></div>
+
+            <h2 class="h5 eh-form-h mt-3">6. Admission Availability</h2>
+            <div class="form-check mb-4">
+                {{ form.admission_only(class="form-check-input") }}
+                <label class="form-check-label" for="{{ form.admission_only.id }}">
+                    Only show schools where admissions are currently open
+                </label>
+            </div>
 
             {{ form.submit(class="btn btn-eh mt-2") }}
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('btnDetectLocation').addEventListener('click', function() {
+    const status = document.getElementById('gpsStatus');
+    if (!navigator.geolocation) {
+        status.textContent = 'Geolocation is not supported by your browser.';
+        return;
+    }
+    status.textContent = 'Detecting coordinates...';
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            document.getElementById('latitude').value = pos.coords.latitude;
+            document.getElementById('longitude').value = pos.coords.longitude;
+            status.innerHTML = `<span class="text-success">&check; Location pinned: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}</span>`;
+        },
+        function(err) {
+            status.innerHTML = `<span class="text-danger">&cross; Could not access GPS. Please provide a pincode instead.</span>`;
+        },
+        { timeout: 8000 }
+    );
+});
+</script>
 {% endblock %}

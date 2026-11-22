@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - EduHive Admin{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Registered Users</h1>
+            <p class="text-muted mb-0">Platform accounts overview. Sensitive credentials and password hashes are never displayed.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('admin.schools') }}" class="btn btn-eh-outline">&larr; School Applications</a>
+        </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="eh-tabs mb-4">
+        {% for r in ["all", "user", "school", "admin", "unassigned"] %}
+        <a href="{{ url_for('admin.users', role=r) }}" class="{{ 'active' if current_role == r }}">
+            {{ r|capitalize }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if users %}
+    <div class="table-responsive shadow-sm border rounded bg-white">
+        <table class="table align-middle eh-table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Email Verified</th>
+                    <th>Registered</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>#{{ u.id }}</td>
+                    <td class="fw-semibold">{{ u.name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <span class="badge {% if u.role == 'admin' %}bg-danger{% elif u.role == 'school' %}bg-primary{% elif u.role == 'user' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ u.role|capitalize }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.is_verified %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">&check; Verified</span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle">&bull; Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ u.created_at.strftime('%d %b %Y, %I:%M %p') if u.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5 bg-light rounded-3 text-muted">
+        <p class="mb-0">No users found in this category.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

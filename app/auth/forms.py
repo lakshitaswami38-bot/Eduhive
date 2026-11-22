@@ -38,3 +38,24 @@ class LoginForm(FlaskForm):
 class ChooseRoleForm(FlaskForm):
     school = SubmitField("Register my school")
     other = SubmitField("Continue as student, parent or teacher")
+
+
+class ForgotPasswordForm(FlaskForm):
+    email = StringField(
+        "Your account email",
+        validators=[DataRequired(), Email(), Length(max=120)],
+        filters=[clean_email],
+    )
+    submit = SubmitField("Send password reset link")
+
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField(
+        "New password",
+        validators=[DataRequired(), Length(min=8, max=128)],
+    )
+    confirm = PasswordField(
+        "Confirm new password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Reset password")

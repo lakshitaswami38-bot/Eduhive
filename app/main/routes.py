@@ -1,4 +1,4 @@
-from flask import redirect, render_template, url_for
+from flask import flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
 from app.decorators import role_required
@@ -25,6 +25,9 @@ def admin_home():
 def school_home():
     school = current_user.school
     if school is None:
+        if not current_user.is_verified:
+            flash("Please verify your email address before registering your school.", "warning")
+            return render_template("main/school_home.html", school=None)
         return redirect(url_for("schools.register"))
     if school.status != "approved":
         return redirect(url_for("schools.status"))

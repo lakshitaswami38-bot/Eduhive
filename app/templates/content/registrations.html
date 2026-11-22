@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Registrations: {{ event.title }} - EduHive{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="eh-form-wide">
+        <a href="{{ url_for('content.event_detail', event_id=event.id) }}">&larr; Back to event</a>
+        <h1 class="mt-2">Event registrations</h1>
+        <p class="text-muted">{{ event.title }} &middot; {{ event.starts_at.strftime('%d %b %Y, %I:%M %p') }} &middot; {{ event.venue }}</p>
+
+        <div class="d-flex gap-3 mb-4">
+            <div class="p-3 border rounded bg-white">
+                <span class="text-muted small d-block">Registrations</span>
+                <span class="fs-4 fw-bold">{{ registrations|length }}</span>
+            </div>
+            <div class="p-3 border rounded bg-white">
+                <span class="text-muted small d-block">Total Attendees</span>
+                <span class="fs-4 fw-bold">{{ total_attendees }}</span>
+            </div>
+            {% if event.capacity %}
+            <div class="p-3 border rounded bg-white">
+                <span class="text-muted small d-block">Capacity</span>
+                <span class="fs-4 fw-bold">{{ event.capacity }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if registrations %}
+        <div class="table-responsive">
+            <table class="table eh-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Attendee Name</th>
+                        <th>Email</th>
+                        <th>Registered As</th>
+                        <th>Attendees</th>
+                        <th>Note</th>
+                        <th>Registered On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in registrations %}
+                    <tr>
+                        <td><strong>{{ r.user.name }}</strong></td>
+                        <td>{{ r.user.email }}</td>
+                        <td>
+                            {% if r.registered_school %}
+                            <span class="badge bg-primary">{{ r.registered_school.name }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ r.user.role|capitalize }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.participants }}</td>
+                        <td>{{ r.note or "&mdash;"|safe }}</td>
+                        <td>{{ r.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No registrations yet for this event.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

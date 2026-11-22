@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField
 from wtforms import IntegerField, StringField, SubmitField, TextAreaField
 from wtforms.fields import DateTimeLocalField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
@@ -9,6 +10,10 @@ from wtforms.validators import DataRequired, Length, NumberRange, Optional, Vali
 class PostForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired(), Length(max=150)])
     body = TextAreaField("Post", validators=[DataRequired(), Length(min=10, max=3000)])
+    photo = FileField(
+        "Photo (optional, max 5 MB)",
+        validators=[Optional(), FileAllowed(["jpg", "jpeg", "png"], "Only JPG or PNG images are allowed.")],
+    )
     submit = SubmitField("Publish post")
 
 
@@ -27,3 +32,13 @@ class EventForm(FlaskForm):
     def validate_starts_at(self, field):
         if field.data and field.data <= datetime.now():
             raise ValidationError("The event must be in the future.")
+
+
+class EventRegisterForm(FlaskForm):
+    participants = IntegerField(
+        "Number of attendees",
+        validators=[DataRequired(), NumberRange(min=1, max=50, message="Attendees must be between 1 and 50.")],
+        default=1,
+    )
+    note = StringField("Note / remarks (optional)", validators=[Optional(), Length(max=255)])
+    submit = SubmitField("Register")

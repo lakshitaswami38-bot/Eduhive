@@ -12,6 +12,9 @@
             {{ form.hidden_tag() }}
             {{ field(form.email, autocomplete="email") }}
             {{ field(form.password, autocomplete="current-password") }}
+            <div class="text-end mb-3">
+                <a href="{{ url_for('auth.forgot_password') }}" class="small text-muted text-decoration-none">Forgot password?</a>
+            </div>
             {{ form.submit(class="btn btn-eh w-100") }}
         </form>
     </div>
