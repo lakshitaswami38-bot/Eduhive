@@ -11,12 +11,53 @@
     </div>
     {% if school %}
     <p class="text-muted">Your school is verified. Keep your profile up to date so families can find you.</p>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="d-flex flex-wrap gap-2 mb-4">
         <a class="btn btn-eh" href="{{ url_for('schools.profile') }}">Edit school profile</a>
+        <a class="btn btn-eh btn-sm" href="{{ url_for('content.new_post') }}">+ New post</a>
+        <a class="btn btn-event btn-sm" href="{{ url_for('content.new_event') }}">+ New event</a>
         <a class="btn btn-eh-dark" href="{{ url_for('schools.public', school_id=school.id) }}">View public page</a>
         <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.inquiries') }}">Admission Inquiries</a>
         <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.connections') }}">School Connections</a>
         <a class="btn btn-eh-outline-dark" href="{{ url_for('schools.status') }}">Application details</a>
+    </div>
+
+    <div class="mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">Your Published Posts</h2>
+            <a class="btn btn-eh btn-sm" href="{{ url_for('content.new_post') }}">+ Create new post</a>
+        </div>
+        {% if posts %}
+        <div class="d-flex flex-column gap-3">
+            {% for p in posts %}
+            <div class="border rounded p-3 bg-white shadow-sm">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h3 class="h5 mb-1">{{ p.title }}</h3>
+                        <div class="text-muted small">{{ p.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+                    </div>
+                    <form method="post" action="{{ url_for('content.delete_post', post_id=p.id) }}" onsubmit="return confirm('Delete this post?');" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                </div>
+                <p class="eh-pre mb-2 text-secondary">{{ p.body }}</p>
+                {% if p.photo_name %}
+                <div class="mb-2">
+                    <img src="{{ url_for('content.post_photo', post_id=p.id) }}" alt="{{ p.title }}" class="img-fluid rounded" style="max-height: 400px; width: 100%; object-fit: cover;">
+                </div>
+                {% endif %}
+                <div class="text-muted small pt-2 border-top">
+                    &hearts; {{ p.likes|length }} like{{ 's' if p.likes|length != 1 }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-light border p-4 text-center">
+            <p class="text-muted mb-3">You haven't published any posts yet. Share news, achievements, and campus photos with prospective families!</p>
+            <a class="btn btn-eh" href="{{ url_for('content.new_post') }}">+ Create your first post</a>
+        </div>
+        {% endif %}
     </div>
     {% else %}
     <p class="text-muted">Please verify your email address to begin registering your school.</p>

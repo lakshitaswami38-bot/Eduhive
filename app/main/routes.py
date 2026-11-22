@@ -1,8 +1,10 @@
 from flask import flash, redirect, render_template, url_for
 from flask_login import current_user, login_required
 
+from app import db
 from app.decorators import role_required
 from app.main import bp
+from app.models import Follow, Post, School
 
 
 @bp.route("/dashboard")
@@ -31,10 +33,27 @@ def school_home():
         return redirect(url_for("schools.register"))
     if school.status != "approved":
         return redirect(url_for("schools.status"))
-    return render_template("main/school_home.html", school=school)
+
+    posts = db.session.scalars(
+        db.select(Post).filter_by(school_id=school.id).order_by(Post.created_at.desc()).limit(10)
+    ).all()
+    return render_template("main/school_home.html", school=school, posts=posts)
 
 
 @bp.route("/dashboard/other")
 @role_required("user")
 def user_home():
-    return render_template("main/user_home.html")
+    followed_ids = db.session.scalars(
+        db.select(Follow.school_id).filter_by(user_id=current_user.id)
+    ).all()
+    if followed_ids:
+        posts = db.session.scalars(
+            db.select(Post).filter(Post.school_id.in_(followed_ids)).order_by(Post.created_at.desc()).limit(10)
+        ).all()
+        feed_type = "following"
+    else:
+        posts = db.session.scalars(
+            db.select(Post).join(School).filter(School.status == "approved", School.is_suspended == False).order_by(Post.created_at.desc()).limit(10)
+        ).all()
+        feed_type = "discover"
+    return render_template("main/user_home.html", posts=posts, feed_type=feed_type, following_count=len(followed_ids))
