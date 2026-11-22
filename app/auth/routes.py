@@ -136,7 +136,16 @@ def forgot_password():
             send_email(user.email, subject, body)
 
         # Same honest response whether email exists or not
-        flash("If an account exists with that email, instructions to reset your password have been sent.", "info")
+        if not current_app.config.get("MAIL_SERVER") and user:
+            flash(
+                Markup(
+                    "If an account exists with that email, instructions to reset your password have been sent. "
+                    f"<div class='mt-2'><a href='{reset_url}' class='btn btn-sm btn-outline-primary fw-bold'>Reset Password Now (Demo / Local Link) &rarr;</a></div>"
+                ),
+                "info",
+            )
+        else:
+            flash("If an account exists with that email, instructions to reset your password have been sent.", "info")
         return redirect(url_for("auth.login"))
 
     return render_template("auth/forgot_password.html", form=form)
